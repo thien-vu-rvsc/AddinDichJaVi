@@ -22,6 +22,7 @@
   --text-secondary: hsl(210, 14%, 75%);
   --text-muted: hsl(210, 10%, 50%);
   --text-cyan: hsl(182, 100%, 65%);
+  --color-phonetic: hsl(195, 100%, 70%); /* High-contrast light blue for dark mode */
   
   --shadow-soft: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   --shadow-neon: 0 0 15px hsla(182, 100%, 50%, 0.2);
@@ -48,6 +49,7 @@ body.light-theme {
   --text-secondary: hsl(222, 15%, 35%);
   --text-muted: hsl(222, 10%, 55%);
   --text-cyan: hsl(200, 95%, 40%);
+  --color-phonetic: hsl(215, 90%, 30%); /* Rich dark blue for light mode */
   
   --shadow-soft: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
   --shadow-neon: 0 0 12px hsla(200, 95%, 42%, 0.15);
@@ -497,7 +499,7 @@ input:checked + .slider:before {
 }
 
 .romaji-text {
-  color: var(--text-secondary);
+  color: var(--color-phonetic);
   font-weight: 400;
   white-space: pre-wrap;
   word-break: break-word;
