@@ -41,6 +41,9 @@
         <button id="tab-history-btn" class="tab-btn" data-tab="tab-history">
           <i class="fa-solid fa-clock-rotate-left"></i> Lịch Sử
         </button>
+        <button id="tab-settings-btn" class="tab-btn" data-tab="tab-settings">
+          <i class="fa-solid fa-gear"></i> Cài Đặt
+        </button>
       </nav>
 
       <!-- Main Content -->
@@ -113,6 +116,56 @@
             <div class="empty-history">
               <i class="fa-regular fa-folder-open"></i>
               <p>Chưa có lịch sử dịch thuật</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 3: Cài Đặt -->
+        <section id="tab-settings" class="tab-pane">
+          <div class="card card-settings">
+            <div class="card-header">
+              <span class="lang-label"><i class="fa-solid fa-sliders"></i> Bộ Dịch (Engine)</span>
+            </div>
+            
+            <div class="settings-group">
+              <label for="engine-select" class="settings-label">Lựa chọn bộ dịch:</label>
+              <select id="engine-select" class="settings-select">
+                <option value="google">Google Translate (Online - Miễn phí)</option>
+                <option value="webllm">WebLLM (In-Browser Offline - Tải trực tiếp vào Web)</option>
+              </select>
+            </div>
+
+            <!-- WebLLM Specific Settings -->
+            <div id="webllm-settings-group" class="webllm-settings hidden">
+              <div class="settings-group">
+                <label for="webllm-model-select" class="settings-label">Mô hình cục bộ (Local Model):</label>
+                <select id="webllm-model-select" class="settings-select">
+                  <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC">Qwen 2.5 1.5B Instruct (Khuyên dùng cho Tiếng Nhật - 1.1GB)</option>
+                  <option value="Llama-3.2-1B-Instruct-q4f16_1-MLC">Llama 3.2 1B Instruct (Siêu nhẹ - 800MB)</option>
+                </select>
+              </div>
+
+              <!-- WebLLM Progress & Initialization -->
+              <div class="webllm-init-container">
+                <button id="webllm-init-btn" class="btn btn-primary">
+                  <i class="fa-solid fa-download"></i> Tải & Khởi tạo Mô hình
+                </button>
+                
+                <div id="webllm-progress-container" class="webllm-progress-box hidden">
+                  <div class="progress-info">
+                    <span id="webllm-status-text">Đang chuẩn bị...</span>
+                    <span id="webllm-percent-text">0%</span>
+                  </div>
+                  <div class="progress-bar-bg">
+                    <div id="webllm-progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="settings-help">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Yêu cầu thiết bị hỗ trợ **WebGPU** (Microsoft Edge trên Win 10/11 có GPU rời hoặc GPU tích hợp). Trọng số mô hình sau khi tải thành công sẽ được lưu trữ trong trình duyệt (Cache Storage) và hoạt động hoàn toàn offline cho các lần sau.</span>
+              </div>
             </div>
           </div>
         </section>

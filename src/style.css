@@ -683,3 +683,125 @@ input:checked + .slider:before {
   display: flex;
   gap: 8px;
 }
+
+/* Settings Page Styles */
+.card-settings {
+  gap: 14px;
+}
+
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.settings-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.settings-select {
+  background: var(--bg-input);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  color: var(--text-primary);
+  padding: 8px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  width: 100%;
+}
+
+.settings-select:focus {
+  border-color: var(--border-glass-focus);
+  box-shadow: var(--shadow-neon);
+}
+
+/* Specific styling for option elements inside dropdown */
+.settings-select option {
+  background: hsl(223, 20%, 14%);
+  color: var(--text-primary);
+}
+
+body.light-theme .settings-select option {
+  background: #fff;
+  color: var(--text-primary);
+}
+
+.webllm-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border-glass);
+}
+
+.webllm-init-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* WebLLM Progress Box */
+.webllm-progress-box {
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+body.light-theme .webllm-progress-box {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+body.light-theme .progress-bar-bg {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan));
+  width: 0%;
+  border-radius: 3px;
+  transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 6px var(--accent-cyan);
+}
+
+.settings-help {
+  display: flex;
+  gap: 6px;
+  background: hsla(182, 100%, 50%, 0.04);
+  border: 1px solid rgba(0, 242, 254, 0.15);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.settings-help i {
+  color: var(--accent-cyan);
+  margin-top: 1px;
+}

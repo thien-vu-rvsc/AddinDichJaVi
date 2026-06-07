@@ -1,6 +1,7 @@
 // Main Application Logic for JP-VI Translator Add-in
 import './style.css';
 import * as wanakana from 'wanakana';
+import { CreateMLCEngine } from "@mlc-ai/web-llm";
 
 // UI Element References
 const hostBadgeEl = document.getElementById("host-badge");
@@ -32,12 +33,28 @@ const inputHiraganaOutput = document.getElementById("input-hiragana-output");
 const outputHiraganaContainer = document.getElementById("output-hiragana-container");
 const outputHiraganaOutput = document.getElementById("output-hiragana-output");
 
+// Settings UI Element References
+const engineSelect = document.getElementById("engine-select");
+const webllmSettingsGroup = document.getElementById("webllm-settings-group");
+const webllmModelSelect = document.getElementById("webllm-model-select");
+const webllmInitBtn = document.getElementById("webllm-init-btn");
+const webllmProgressContainer = document.getElementById("webllm-progress-container");
+const webllmStatusText = document.getElementById("webllm-status-text");
+const webllmPercentText = document.getElementById("webllm-percent-text");
+const webllmProgressBar = document.getElementById("webllm-progress-bar");
+
 // State Variables
 let isAutoTranslate = true;
 let isSelectionHandlerRegistered = false;
 let debounceTimer = null;
 let lastTranslatedText = "";
 let isJaToVi = true; // true: Japanese -> Vietnamese, false: Vietnamese -> Japanese
+
+// Translation Engine & Model State
+let currentEngine = localStorage.getItem("jp_vi_engine") || "google";
+let webllmModel = localStorage.getItem("jp_vi_webllm_model") || "Qwen2.5-1.5B-Instruct-q4f16_1-MLC";
+let webllmEngine = null;
+let isWebllmLoading = false;
 
 // Theme Toggle Reference & State
 const themeToggleBtn = document.getElementById("theme-toggle-btn");
@@ -192,6 +209,38 @@ function initApp() {
     });
   });
 
+  // Engine Selection Dropdown Event
+  if (engineSelect) {
+    engineSelect.value = currentEngine;
+    engineSelect.addEventListener("change", (e) => {
+      currentEngine = e.target.value;
+      localStorage.setItem("jp_vi_engine", currentEngine);
+      updateEngineUI();
+    });
+  }
+
+  // WebLLM Model Selection Dropdown Event
+  if (webllmModelSelect) {
+    webllmModelSelect.value = webllmModel;
+    webllmModelSelect.addEventListener("change", (e) => {
+      webllmModel = e.target.value;
+      localStorage.setItem("jp_vi_webllm_model", webllmModel);
+      // Reset engine if model changes so it has to reinitialize
+      webllmEngine = null;
+      if (webllmInitBtn) {
+        webllmInitBtn.disabled = false;
+        webllmInitBtn.innerHTML = '<i class="fa-solid fa-download"></i> Tải & Khởi tạo Mô hình';
+      }
+    });
+  }
+
+  // WebLLM Initialize Button Event
+  if (webllmInitBtn) {
+    webllmInitBtn.addEventListener("click", () => {
+      initWebLLM();
+    });
+  }
+
   // Language Swap Button Click Event
   swapLangBtn.addEventListener("click", () => {
     isJaToVi = !isJaToVi;
@@ -265,7 +314,106 @@ function initApp() {
 
   // Initial UI Setup
   updateLanguageUI();
+  updateEngineUI();
   renderHistory();
+}
+
+// Update UI based on active engine
+function updateEngineUI() {
+  if (currentEngine === "webllm") {
+    if (webllmSettingsGroup) webllmSettingsGroup.classList.remove("hidden");
+    if (sourceTextEl) {
+      sourceTextEl.placeholder = isJaToVi 
+        ? "Quét chọn văn bản tiếng Nhật hoặc tự nhập để dịch offline..."
+        : "Quét chọn văn bản tiếng Việt hoặc tự nhập để dịch offline...";
+    }
+    
+    // Update init button state if engine is already loaded
+    if (webllmEngine) {
+      if (webllmInitBtn) {
+        webllmInitBtn.disabled = true;
+        webllmInitBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Mô hình đã sẵn sàng';
+      }
+    } else if (isWebllmLoading) {
+      if (webllmInitBtn) {
+        webllmInitBtn.disabled = true;
+        webllmInitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang tải...';
+      }
+    } else {
+      if (webllmInitBtn) {
+        webllmInitBtn.disabled = false;
+        webllmInitBtn.innerHTML = '<i class="fa-solid fa-download"></i> Tải & Khởi tạo Mô hình';
+      }
+    }
+  } else {
+    if (webllmSettingsGroup) webllmSettingsGroup.classList.add("hidden");
+    if (sourceTextEl) {
+      sourceTextEl.placeholder = isJaToVi
+        ? "Quét chọn văn bản tiếng Nhật trong tài liệu hoặc nhập tại đây..."
+        : "Quét chọn văn bản tiếng Việt trong tài liệu hoặc nhập tại đây...";
+    }
+  }
+}
+
+// Initialize WebLLM Engine
+async function initWebLLM() {
+  if (isWebllmLoading || webllmEngine) return;
+
+  isWebllmLoading = true;
+  if (webllmInitBtn) {
+    webllmInitBtn.disabled = true;
+    webllmInitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang khởi tạo...';
+  }
+  if (webllmProgressContainer) webllmProgressContainer.classList.remove("hidden");
+  if (webllmStatusText) webllmStatusText.textContent = "Đang chuẩn bị...";
+  if (webllmPercentText) webllmPercentText.textContent = "0%";
+  if (webllmProgressBar) webllmProgressBar.style.width = "0%";
+
+  try {
+    webllmEngine = await CreateMLCEngine(webllmModel, {
+      initProgressCallback: (report) => {
+        const percent = Math.round(report.progress * 100);
+        if (webllmPercentText) webllmPercentText.textContent = `${percent}%`;
+        if (webllmProgressBar) webllmProgressBar.style.width = `${percent}%`;
+        
+        // Clean up status text description to make it short and clean
+        let status = report.text;
+        if (status.includes("Fetch")) {
+          status = "Đang tải dữ liệu mô hình...";
+        } else if (status.includes("Loading")) {
+          status = "Đang nạp mô hình vào GPU...";
+        } else if (status.includes("compile") || status.includes("Shader")) {
+          status = "Đang biên dịch Shader WebGPU...";
+        } else if (status.includes("Finish")) {
+          status = "Đã hoàn thành!";
+        }
+        if (webllmStatusText) webllmStatusText.textContent = status;
+      }
+    });
+
+    isWebllmLoading = false;
+    if (webllmInitBtn) {
+      webllmInitBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Mô hình đã sẵn sàng';
+    }
+    if (webllmStatusText) webllmStatusText.textContent = "Mô hình đã sẵn sàng ngoại tuyến!";
+    
+    // Auto-hide progress bar after 3 seconds
+    setTimeout(() => {
+      if (webllmProgressContainer) webllmProgressContainer.classList.add("hidden");
+    }, 3000);
+    
+    showToast("Đã tải và khởi tạo mô hình thành công!");
+  } catch (error) {
+    console.error("WebLLM Init Error:", error);
+    isWebllmLoading = false;
+    if (webllmInitBtn) {
+      webllmInitBtn.disabled = false;
+      webllmInitBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Lỗi, thử lại';
+    }
+    if (webllmStatusText) webllmStatusText.textContent = "Lỗi: " + error.message;
+    if (webllmProgressBar) webllmProgressBar.style.width = "0%";
+    showToast("Khởi tạo mô hình thất bại. Vui lòng kiểm tra thiết bị hỗ trợ WebGPU.");
+  }
 }
 
 // Update UI text based on current translation direction
@@ -304,6 +452,67 @@ async function translateText(text) {
   resultCard.classList.remove("hidden");
   inputHiraganaContainer.classList.add("hidden");
   outputHiraganaContainer.classList.add("hidden");
+
+  // WebLLM Local Translation
+  if (currentEngine === "webllm") {
+    if (!webllmEngine) {
+      translationOutput.innerHTML = '<span style="color: #ff5252; font-size: 13px;"><i class="fa-solid fa-triangle-exclamation"></i> Vui lòng vào phần <strong>Cài Đặt</strong> tải và khởi tạo mô hình trước khi dịch.</span>';
+      return;
+    }
+
+    try {
+      const systemPrompt = isJaToVi
+        ? `You are a professional Japanese to Vietnamese translator. Translate the input Japanese text to Vietnamese and provide the Hiragana reading of the Japanese text. You must return a JSON object with this schema: { "translation": "Vietnamese translation", "hiragana": "Hiragana reading of the Japanese text (convert Kanji to Hiragana, keep Hiragana/Katakana as is)" }`
+        : `You are a professional Vietnamese to Japanese translator. Translate the input Vietnamese text to Japanese and provide the Hiragana reading of the Japanese translation. You must return a JSON object with this schema: { "translation": "Japanese translation", "hiragana": "Hiragana reading of the Japanese translation (convert Kanji to Hiragana, keep Hiragana/Katakana as is)" }`;
+
+      const messages = [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: text }
+      ];
+
+      const reply = await webllmEngine.chat.completions.create({
+        messages,
+        response_format: { type: "json_object" }
+      });
+
+      const rawContent = reply.choices[0].message.content.trim();
+      const data = JSON.parse(rawContent);
+
+      const translation = data.translation || "";
+      const hiragana = data.hiragana || "";
+
+      if (translation) {
+        translationOutput.textContent = translation;
+
+        // Update Hiragana UI based on current translation direction
+        if (hiragana) {
+          if (isJaToVi) {
+            inputHiraganaOutput.textContent = hiragana;
+            inputHiraganaContainer.classList.remove("hidden");
+            outputHiraganaContainer.classList.add("hidden");
+          } else {
+            outputHiraganaOutput.textContent = hiragana;
+            outputHiraganaContainer.classList.remove("hidden");
+            inputHiraganaContainer.classList.add("hidden");
+          }
+        } else {
+          inputHiraganaContainer.classList.add("hidden");
+          outputHiraganaContainer.classList.add("hidden");
+        }
+
+        // Add to History
+        const jaText = isJaToVi ? text : translation;
+        const viText = isJaToVi ? translation : text;
+        saveToHistory(jaText, viText, hiragana);
+      } else {
+        translationOutput.textContent = "Không thể tạo bản dịch phù hợp.";
+      }
+    } catch (error) {
+      console.error("WebLLM translation error:", error);
+      translationOutput.textContent = "Lỗi khi chạy mô hình cục bộ: " + error.message;
+    }
+    return;
+  }
 
   try {
     const sl = isJaToVi ? "ja" : "vi";
