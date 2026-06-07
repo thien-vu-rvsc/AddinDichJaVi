@@ -62,7 +62,7 @@
             
             <!-- Hiragana inside Input Card (for JA -> VI source text) -->
             <div id="input-hiragana-container" class="romaji-box hidden">
-              <span class="romaji-label">Hiragana:</span>
+              <span id="input-hiragana-label" class="romaji-label">Hiragana:</span>
               <span id="input-hiragana-output" class="romaji-text"></span>
             </div>
 
@@ -97,7 +97,7 @@
             
             <!-- Hiragana inside Output Card (for VI -> JA translated text) -->
             <div id="output-hiragana-container" class="romaji-box hidden">
-              <span class="romaji-label">Hiragana:</span>
+              <span id="output-hiragana-label" class="romaji-label">Hiragana:</span>
               <span id="output-hiragana-output" class="romaji-text"></span>
             </div>
           </div>
@@ -206,6 +206,22 @@
                   <code style="display: block; background: rgba(0, 0, 0, 0.3); padding: 4px; border-radius: 4px; margin-top: 4px; font-family: monospace; user-select: all;">ollama run gemma4:e2b</code>
                 </span>
               </div>
+            </div>
+          </div>
+
+          <!-- Phonetic Display Settings -->
+          <div class="card card-settings" style="margin-top: 12px;">
+            <div class="card-header">
+              <span class="lang-label"><i class="fa-solid fa-eye"></i> Hiển thị Phiên âm (Phonetic)</span>
+            </div>
+            
+            <div class="settings-group">
+              <label for="phonetic-select" class="settings-label">Kiểu phiên âm:</label>
+              <select id="phonetic-select" class="settings-select">
+                <option value="hiragana">Chỉ hiển thị Hiragana (にほんご)</option>
+                <option value="romaji">Chỉ hiển thị Romaji (nihongo)</option>
+                <option value="both">Hiển thị cả hai (にほんご / nihongo)</option>
+              </select>
             </div>
           </div>
         </section>

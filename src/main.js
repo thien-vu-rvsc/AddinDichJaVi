@@ -49,6 +49,7 @@ const ollamaStatusLed = document.getElementById("ollama-status-led");
 const ollamaStatusText = document.getElementById("ollama-status-text");
 const ollamaModelSelect = document.getElementById("ollama-model-select");
 const ollamaRefreshBtn = document.getElementById("ollama-refresh-btn");
+const phoneticSelect = document.getElementById("phonetic-select");
 
 // State Variables
 let isAutoTranslate = true;
@@ -56,6 +57,9 @@ let isSelectionHandlerRegistered = false;
 let debounceTimer = null;
 let lastTranslatedText = "";
 let isJaToVi = true; // true: Japanese -> Vietnamese, false: Vietnamese -> Japanese
+let phoneticMode = localStorage.getItem("jp_vi_phonetic_mode") || "hiragana";
+let lastHiragana = "";
+let lastRomaji = "";
 
 // Translation Engine & Model State
 let currentEngine = localStorage.getItem("jp_vi_engine") || "google";
@@ -273,6 +277,18 @@ function initApp() {
     });
   }
 
+  // Phonetic Selection Dropdown Event
+  if (phoneticSelect) {
+    phoneticSelect.value = phoneticMode;
+    phoneticSelect.addEventListener("change", (e) => {
+      phoneticMode = e.target.value;
+      localStorage.setItem("jp_vi_phonetic_mode", phoneticMode);
+      if (lastHiragana || lastRomaji) {
+        displayPhonetics(lastHiragana, lastRomaji);
+      }
+    });
+  }
+
   // Language Swap Button Click Event
   swapLangBtn.addEventListener("click", () => {
     isJaToVi = !isJaToVi;
@@ -288,6 +304,8 @@ function initApp() {
     resultCard.classList.add("hidden");
     ttsBtnEl.disabled = true;
     lastTranslatedText = "";
+    lastHiragana = "";
+    lastRomaji = "";
   });
 
   // Translate Button Click (Manual translation)
@@ -580,10 +598,72 @@ function extractJSON(text) {
 }
 
 // Translate text between languages
+// Display phonetics based on mode (Hiragana, Romaji, or both)
+function displayPhonetics(hiraganaText, romajiText) {
+  // Store the raw inputs in state
+  lastHiragana = hiraganaText || "";
+  lastRomaji = romajiText || "";
+
+  let hiragana = lastHiragana;
+  let romaji = lastRomaji;
+
+  if (typeof wanakana !== "undefined") {
+    if (!hiragana && romaji) {
+      hiragana = wanakana.toHiragana(romaji);
+    } else if (hiragana && !romaji) {
+      romaji = wanakana.toRomaji(hiragana);
+    }
+  }
+
+  // Update state with computed values if empty
+  if (hiragana && !lastHiragana) lastHiragana = hiragana;
+  if (romaji && !lastRomaji) lastRomaji = romaji;
+
+  let labelText = "Hiragana:";
+  let displayText = "";
+
+  if (phoneticMode === "romaji") {
+    labelText = "Romaji:";
+    displayText = romaji;
+  } else if (phoneticMode === "both") {
+    labelText = "Phiên âm:";
+    displayText = `${hiragana} / ${romaji}`;
+  } else {
+    labelText = "Hiragana:";
+    displayText = hiragana;
+  }
+
+  const inputLabel = document.getElementById("input-hiragana-label");
+  const inputOutput = document.getElementById("input-hiragana-output");
+  const outputLabel = document.getElementById("output-hiragana-label");
+  const outputOutput = document.getElementById("output-hiragana-output");
+
+  if (inputLabel) inputLabel.textContent = labelText;
+  if (inputOutput) inputOutput.textContent = displayText;
+  if (outputLabel) outputLabel.textContent = labelText;
+  if (outputOutput) outputOutput.textContent = displayText;
+
+  if (displayText.trim()) {
+    if (isJaToVi) {
+      inputHiraganaContainer.classList.remove("hidden");
+      outputHiraganaContainer.classList.add("hidden");
+    } else {
+      outputHiraganaContainer.classList.remove("hidden");
+      inputHiraganaContainer.classList.add("hidden");
+    }
+  } else {
+    inputHiraganaContainer.classList.add("hidden");
+    outputHiraganaContainer.classList.add("hidden");
+  }
+}
+
+// Translate text between languages
 async function translateText(text) {
   if (!text) return;
   
   lastTranslatedText = text;
+  lastHiragana = "";
+  lastRomaji = "";
   
   // Show loading indicator
   translationOutput.innerHTML = '<span class="loading"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang dịch...</span>';
@@ -630,27 +710,12 @@ async function translateText(text) {
 
       if (translation) {
         translationOutput.textContent = translation;
-
-        // Update Hiragana UI based on current translation direction
-        if (hiragana) {
-          if (isJaToVi) {
-            inputHiraganaOutput.textContent = hiragana;
-            inputHiraganaContainer.classList.remove("hidden");
-            outputHiraganaContainer.classList.add("hidden");
-          } else {
-            outputHiraganaOutput.textContent = hiragana;
-            outputHiraganaContainer.classList.remove("hidden");
-            inputHiraganaContainer.classList.add("hidden");
-          }
-        } else {
-          inputHiraganaContainer.classList.add("hidden");
-          outputHiraganaContainer.classList.add("hidden");
-        }
+        displayPhonetics(hiragana, null);
 
         // Add to History
         const jaText = isJaToVi ? text : translation;
         const viText = isJaToVi ? translation : text;
-        saveToHistory(jaText, viText, hiragana);
+        saveToHistory(jaText, viText, lastHiragana);
       } else {
         translationOutput.textContent = "Không thể tạo bản dịch phù hợp.";
       }
@@ -709,27 +774,12 @@ async function translateText(text) {
 
       if (translation) {
         translationOutput.textContent = translation;
-
-        // Update Hiragana UI based on current translation direction
-        if (hiragana) {
-          if (isJaToVi) {
-            inputHiraganaOutput.textContent = hiragana;
-            inputHiraganaContainer.classList.remove("hidden");
-            outputHiraganaContainer.classList.add("hidden");
-          } else {
-            outputHiraganaOutput.textContent = hiragana;
-            outputHiraganaContainer.classList.remove("hidden");
-            inputHiraganaContainer.classList.add("hidden");
-          }
-        } else {
-          inputHiraganaContainer.classList.add("hidden");
-          outputHiraganaContainer.classList.add("hidden");
-        }
+        displayPhonetics(hiragana, null);
 
         // Add to History
         const jaText = isJaToVi ? text : translation;
         const viText = isJaToVi ? translation : text;
-        saveToHistory(jaText, viText, hiragana);
+        saveToHistory(jaText, viText, lastHiragana);
       } else {
         translationOutput.textContent = "Không nhận được phản hồi phù hợp từ mô hình local.";
       }
@@ -770,35 +820,12 @@ async function translateText(text) {
 
     if (translation) {
       translationOutput.textContent = translation;
-      
-      // Convert Romaji to Hiragana using WanaKana
-      let hiragana = "";
-      if (romaji && typeof wanakana !== "undefined") {
-        hiragana = wanakana.toHiragana(romaji);
-      }
-      
-      // Update Hiragana UI based on current translation direction
-      if (hiragana) {
-        if (isJaToVi) {
-          // JA -> VI: Japanese is the source, show Hiragana under input card text area
-          inputHiraganaOutput.textContent = hiragana;
-          inputHiraganaContainer.classList.remove("hidden");
-          outputHiraganaContainer.classList.add("hidden");
-        } else {
-          // VI -> JA: Japanese is the target, show Hiragana under output card translated text
-          outputHiraganaOutput.textContent = hiragana;
-          outputHiraganaContainer.classList.remove("hidden");
-          inputHiraganaContainer.classList.add("hidden");
-        }
-      } else {
-        inputHiraganaContainer.classList.add("hidden");
-        outputHiraganaContainer.classList.add("hidden");
-      }
+      displayPhonetics(null, romaji);
 
       // Add to History (normalize so 'ja' is always Japanese and 'vi' is always Vietnamese in the record)
       const jaText = isJaToVi ? text : translation;
       const viText = isJaToVi ? translation : text;
-      saveToHistory(jaText, viText, hiragana);
+      saveToHistory(jaText, viText, lastHiragana);
     } else {
       translationOutput.textContent = "Không tìm thấy bản dịch phù hợp.";
     }
