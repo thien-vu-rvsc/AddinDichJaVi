@@ -499,6 +499,9 @@ input:checked + .slider:before {
 .romaji-text {
   color: var(--text-secondary);
   font-weight: 600;
+  white-space: pre-wrap;
+  word-break: break-word;
+  flex: 1;
 }
 
 .hidden {
