@@ -412,26 +412,32 @@ async function initWebLLM() {
   if (webllmProgressBar) webllmProgressBar.style.width = "0%";
 
   try {
-    webllmEngine = await CreateMLCEngine(webllmModel, {
-      initProgressCallback: (report) => {
-        const percent = Math.round(report.progress * 100);
-        if (webllmPercentText) webllmPercentText.textContent = `${percent}%`;
-        if (webllmProgressBar) webllmProgressBar.style.width = `${percent}%`;
-        
-        // Clean up status text description to make it short and clean
-        let status = report.text;
-        if (status.includes("Fetch")) {
-          status = "Đang tải dữ liệu mô hình...";
-        } else if (status.includes("Loading")) {
-          status = "Đang nạp mô hình vào GPU...";
-        } else if (status.includes("compile") || status.includes("Shader")) {
-          status = "Đang biên dịch Shader WebGPU...";
-        } else if (status.includes("Finish")) {
-          status = "Đã hoàn thành!";
+    webllmEngine = await CreateMLCEngine(
+      webllmModel,
+      {
+        initProgressCallback: (report) => {
+          const percent = Math.round(report.progress * 100);
+          if (webllmPercentText) webllmPercentText.textContent = `${percent}%`;
+          if (webllmProgressBar) webllmProgressBar.style.width = `${percent}%`;
+          
+          // Clean up status text description to make it short and clean
+          let status = report.text;
+          if (status.includes("Fetch")) {
+            status = "Đang tải dữ liệu mô hình...";
+          } else if (status.includes("Loading")) {
+            status = "Đang nạp mô hình vào GPU...";
+          } else if (status.includes("compile") || status.includes("Shader")) {
+            status = "Đang biên dịch Shader WebGPU...";
+          } else if (status.includes("Finish")) {
+            status = "Đã hoàn thành!";
+          }
+          if (webllmStatusText) webllmStatusText.textContent = status;
         }
-        if (webllmStatusText) webllmStatusText.textContent = status;
+      },
+      {
+        context_window_size: 1024
       }
-    });
+    );
 
     isWebllmLoading = false;
     if (webllmInitBtn) {
@@ -594,8 +600,8 @@ async function translateText(text) {
 
     try {
       const systemPrompt = isJaToVi
-        ? `You are a professional Japanese to Vietnamese translator. Translate the input Japanese text to Vietnamese and provide the Hiragana reading of the Japanese text. You must return a JSON object with this schema: { "translation": "Vietnamese translation", "hiragana": "Hiragana reading of the Japanese text (convert Kanji to Hiragana, keep Hiragana/Katakana as is)" }`
-        : `You are a professional Vietnamese to Japanese translator. Translate the input Vietnamese text to Japanese and provide the Hiragana reading of the Japanese translation. You must return a JSON object with this schema: { "translation": "Japanese translation", "hiragana": "Hiragana reading of the Japanese translation (convert Kanji to Hiragana, keep Hiragana/Katakana as is)" }`;
+        ? `Translate Japanese to Vietnamese. Output ONLY JSON: {"translation": "Vietnamese translation", "hiragana": "Hiragana reading of Japanese text (Kanji to Hiragana)"}. No preamble, no explanation, no markdown.`
+        : `Translate Vietnamese to Japanese. Output ONLY JSON: {"translation": "Japanese translation", "hiragana": "Hiragana reading of Japanese translation (Kanji to Hiragana)"}. No preamble, no explanation, no markdown.`;
 
       const messages = [
         { role: "system", content: systemPrompt },
@@ -603,7 +609,9 @@ async function translateText(text) {
       ];
 
       const reply = await webllmEngine.chat.completions.create({
-        messages
+        messages,
+        max_tokens: 256,
+        temperature: 0.1
       });
 
       const rawContent = reply.choices[0].message.content.trim();
@@ -657,8 +665,8 @@ async function translateText(text) {
   if (currentEngine === "ollama") {
     try {
       const systemPrompt = isJaToVi
-        ? `You are a professional Japanese to Vietnamese translator. Translate the input Japanese text to Vietnamese and provide the Hiragana reading of the Japanese text. You must return a JSON object with this schema: { "translation": "Vietnamese translation", "hiragana": "Hiragana reading of the Japanese text (convert Kanji to Hiragana, keep Hiragana/Katakana as is)" }`
-        : `You are a professional Vietnamese to Japanese translator. Translate the input Vietnamese text to Japanese and provide the Hiragana reading of the Japanese translation. You must return a JSON object with this schema: { "translation": "Japanese translation", "hiragana": "Hiragana reading of the Japanese translation (convert Kanji to Hiragana, keep Hiragana/Katakana as is)" }`;
+        ? `Translate Japanese to Vietnamese. Output ONLY JSON: {"translation": "Vietnamese translation", "hiragana": "Hiragana reading of Japanese text (Kanji to Hiragana)"}. No preamble, no explanation, no markdown.`
+        : `Translate Vietnamese to Japanese. Output ONLY JSON: {"translation": "Japanese translation", "hiragana": "Hiragana reading of Japanese translation (Kanji to Hiragana)"}. No preamble, no explanation, no markdown.`;
 
       const response = await fetch("/api/ollama/api/chat", {
         method: "POST",
@@ -672,6 +680,11 @@ async function translateText(text) {
             { role: "user", content: text }
           ],
           format: "json", // Constrains output to JSON
+          options: {
+            temperature: 0.1,
+            num_predict: 256,
+            num_ctx: 1024
+          },
           stream: false
         })
       });
