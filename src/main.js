@@ -548,6 +548,31 @@ function updateLanguageUI() {
   }
 }
 
+// Helper to extract and parse JSON from LLM response
+function extractJSON(text) {
+  if (!text) return null;
+  const trimmed = text.trim();
+  
+  // Try direct parsing
+  try {
+    return JSON.parse(trimmed);
+  } catch (e) {
+    // Ignore and proceed
+  }
+
+  // Regex to match anything between the first { and the last }
+  try {
+    const jsonMatch = trimmed.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+  } catch (e) {
+    console.error("Failed to parse extracted JSON block:", e);
+  }
+
+  return null;
+}
+
 // Translate text between languages
 async function translateText(text) {
   if (!text) return;
@@ -578,15 +603,22 @@ async function translateText(text) {
       ];
 
       const reply = await webllmEngine.chat.completions.create({
-        messages,
-        response_format: { type: "json_object" }
+        messages
       });
 
       const rawContent = reply.choices[0].message.content.trim();
-      const data = JSON.parse(rawContent);
+      const data = extractJSON(rawContent);
 
-      const translation = data.translation || "";
-      const hiragana = data.hiragana || "";
+      let translation = "";
+      let hiragana = "";
+
+      if (data) {
+        translation = data.translation || "";
+        hiragana = data.hiragana || "";
+      } else {
+        // Fallback: use raw content as translation if not JSON
+        translation = rawContent;
+      }
 
       if (translation) {
         translationOutput.textContent = translation;
@@ -650,10 +682,17 @@ async function translateText(text) {
 
       const replyData = await response.json();
       const rawContent = replyData.message.content.trim();
-      const data = JSON.parse(rawContent);
+      const data = extractJSON(rawContent);
 
-      const translation = data.translation || "";
-      const hiragana = data.hiragana || "";
+      let translation = "";
+      let hiragana = "";
+
+      if (data) {
+        translation = data.translation || "";
+        hiragana = data.hiragana || "";
+      } else {
+        translation = rawContent;
+      }
 
       if (translation) {
         translationOutput.textContent = translation;
