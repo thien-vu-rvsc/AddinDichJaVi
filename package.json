@@ -1,0 +1,23 @@
+{
+  "name": "brave-volta",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start:excel": "office-addin-debugging start manifest.xml desktop --app excel",
+    "start:powerpoint": "office-addin-debugging start manifest.xml desktop --app powerpoint",
+    "start:word": "office-addin-debugging start manifest.xml desktop --app word",
+    "stop": "office-addin-debugging stop manifest.xml"
+  },
+  "devDependencies": {
+    "office-addin-debugging": "^6.1.1",
+    "office-addin-dev-certs": "^2.0.9",
+    "vite": "^8.0.12"
+  },
+  "dependencies": {
+    "wanakana": "^5.3.1"
+  }
+}
