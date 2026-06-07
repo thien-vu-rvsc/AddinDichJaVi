@@ -619,28 +619,20 @@ function displayPhonetics(hiraganaText, romajiText) {
   if (hiragana && !lastHiragana) lastHiragana = hiragana;
   if (romaji && !lastRomaji) lastRomaji = romaji;
 
-  let labelText = "Hiragana:";
   let displayText = "";
 
   if (phoneticMode === "romaji") {
-    labelText = "Romaji:";
     displayText = romaji;
   } else if (phoneticMode === "both") {
-    labelText = "Phiên âm:";
     displayText = `${hiragana} / ${romaji}`;
   } else {
-    labelText = "Hiragana:";
     displayText = hiragana;
   }
 
-  const inputLabel = document.getElementById("input-hiragana-label");
   const inputOutput = document.getElementById("input-hiragana-output");
-  const outputLabel = document.getElementById("output-hiragana-label");
   const outputOutput = document.getElementById("output-hiragana-output");
 
-  if (inputLabel) inputLabel.textContent = labelText;
   if (inputOutput) inputOutput.textContent = displayText;
-  if (outputLabel) outputLabel.textContent = labelText;
   if (outputOutput) outputOutput.textContent = displayText;
 
   if (displayText.trim()) {
