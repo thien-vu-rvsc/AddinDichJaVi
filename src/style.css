@@ -805,3 +805,44 @@ body.light-theme .progress-bar-bg {
   color: var(--accent-cyan);
   margin-top: 1px;
 }
+
+/* LED Status Indicator */
+.status-led {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+  transition: background-color var(--transition-smooth), box-shadow var(--transition-smooth);
+}
+
+.led-red {
+  background-color: #ff5252;
+  box-shadow: 0 0 8px #ff5252;
+}
+
+.led-green {
+  background-color: #4caf50;
+  box-shadow: 0 0 8px #4caf50;
+  animation: pulse-green 2s infinite;
+}
+
+.led-orange {
+  background-color: #ff9800;
+  box-shadow: 0 0 8px #ff9800;
+}
+
+@keyframes pulse-green {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 8px #4caf50;
+  }
+  70% {
+    transform: scale(1.1);
+    box-shadow: 0 0 12px rgba(76, 175, 80, 0.4);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 8px #4caf50;
+  }
+}

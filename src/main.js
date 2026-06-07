@@ -43,6 +43,13 @@ const webllmStatusText = document.getElementById("webllm-status-text");
 const webllmPercentText = document.getElementById("webllm-percent-text");
 const webllmProgressBar = document.getElementById("webllm-progress-bar");
 
+// Ollama UI Element References
+const ollamaSettingsGroup = document.getElementById("ollama-settings-group");
+const ollamaStatusLed = document.getElementById("ollama-status-led");
+const ollamaStatusText = document.getElementById("ollama-status-text");
+const ollamaModelSelect = document.getElementById("ollama-model-select");
+const ollamaRefreshBtn = document.getElementById("ollama-refresh-btn");
+
 // State Variables
 let isAutoTranslate = true;
 let isSelectionHandlerRegistered = false;
@@ -55,6 +62,8 @@ let currentEngine = localStorage.getItem("jp_vi_engine") || "google";
 let webllmModel = localStorage.getItem("jp_vi_webllm_model") || "Qwen2.5-1.5B-Instruct-q4f16_1-MLC";
 let webllmEngine = null;
 let isWebllmLoading = false;
+let ollamaModel = localStorage.getItem("jp_vi_ollama_model") || "qwen2.5:1.5b";
+let isOllamaConnected = false;
 
 // Theme Toggle Reference & State
 const themeToggleBtn = document.getElementById("theme-toggle-btn");
@@ -205,6 +214,10 @@ function initApp() {
 
       if (targetTab === "tab-history") {
         renderHistory();
+      } else if (targetTab === "tab-settings") {
+        if (currentEngine === "ollama") {
+          checkOllamaConnection();
+        }
       }
     });
   });
@@ -216,6 +229,9 @@ function initApp() {
       currentEngine = e.target.value;
       localStorage.setItem("jp_vi_engine", currentEngine);
       updateEngineUI();
+      if (currentEngine === "ollama") {
+        checkOllamaConnection();
+      }
     });
   }
 
@@ -238,6 +254,22 @@ function initApp() {
   if (webllmInitBtn) {
     webllmInitBtn.addEventListener("click", () => {
       initWebLLM();
+    });
+  }
+
+  // Ollama Model Selection Dropdown Event
+  if (ollamaModelSelect) {
+    ollamaModelSelect.value = ollamaModel;
+    ollamaModelSelect.addEventListener("change", (e) => {
+      ollamaModel = e.target.value;
+      localStorage.setItem("jp_vi_ollama_model", ollamaModel);
+    });
+  }
+
+  // Ollama Refresh Button Event
+  if (ollamaRefreshBtn) {
+    ollamaRefreshBtn.addEventListener("click", () => {
+      checkOllamaConnection();
     });
   }
 
@@ -322,6 +354,7 @@ function initApp() {
 function updateEngineUI() {
   if (currentEngine === "webllm") {
     if (webllmSettingsGroup) webllmSettingsGroup.classList.remove("hidden");
+    if (ollamaSettingsGroup) ollamaSettingsGroup.classList.add("hidden");
     if (sourceTextEl) {
       sourceTextEl.placeholder = isJaToVi 
         ? "Quét chọn văn bản tiếng Nhật hoặc tự nhập để dịch offline..."
@@ -345,8 +378,17 @@ function updateEngineUI() {
         webllmInitBtn.innerHTML = '<i class="fa-solid fa-download"></i> Tải & Khởi tạo Mô hình';
       }
     }
+  } else if (currentEngine === "ollama") {
+    if (webllmSettingsGroup) webllmSettingsGroup.classList.add("hidden");
+    if (ollamaSettingsGroup) ollamaSettingsGroup.classList.remove("hidden");
+    if (sourceTextEl) {
+      sourceTextEl.placeholder = isJaToVi 
+        ? "Quét chọn văn bản tiếng Nhật hoặc tự nhập để dịch offline (CPU)..."
+        : "Quét chọn văn bản tiếng Việt hoặc tự nhập để dịch offline (CPU)...";
+    }
   } else {
     if (webllmSettingsGroup) webllmSettingsGroup.classList.add("hidden");
+    if (ollamaSettingsGroup) ollamaSettingsGroup.classList.add("hidden");
     if (sourceTextEl) {
       sourceTextEl.placeholder = isJaToVi
         ? "Quét chọn văn bản tiếng Nhật trong tài liệu hoặc nhập tại đây..."
@@ -413,6 +455,71 @@ async function initWebLLM() {
     if (webllmStatusText) webllmStatusText.textContent = "Lỗi: " + error.message;
     if (webllmProgressBar) webllmProgressBar.style.width = "0%";
     showToast("Khởi tạo mô hình thất bại. Vui lòng kiểm tra thiết bị hỗ trợ WebGPU.");
+  }
+}
+
+// Check connection and fetch models from local Ollama
+async function checkOllamaConnection() {
+  if (!ollamaStatusLed || !ollamaStatusText || !ollamaModelSelect) return;
+
+  // Show testing status
+  ollamaStatusLed.className = "status-led led-orange";
+  ollamaStatusText.textContent = "Đang kết nối...";
+
+  try {
+    const response = await fetch("/api/ollama/api/tags");
+    if (!response.ok) throw new Error("Không phản hồi từ Ollama.");
+
+    const data = await response.json();
+    isOllamaConnected = true;
+    ollamaStatusLed.className = "status-led led-green";
+    ollamaStatusText.textContent = "Đã kết nối";
+
+    // Populate dynamic models
+    const availableModels = data.models || [];
+    
+    // Clear current select
+    ollamaModelSelect.innerHTML = "";
+
+    if (availableModels.length === 0) {
+      // If connected but no models downloaded, add defaults
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "Chưa tải model (Chạy cmd: ollama run gemma4:e2b)";
+      ollamaModelSelect.appendChild(opt);
+    } else {
+      availableModels.forEach((model) => {
+        const opt = document.createElement("option");
+        opt.value = model.name;
+        opt.textContent = `${model.name} (${(model.size / (1024 * 1024 * 1024)).toFixed(2)} GB)`;
+        ollamaModelSelect.appendChild(opt);
+      });
+
+      // Restore previously selected model if it exists in the list
+      const restoredModel = localStorage.getItem("jp_vi_ollama_model");
+      if (restoredModel && availableModels.some(m => m.name === restoredModel)) {
+        ollamaModel = restoredModel;
+      } else {
+        // Fallback to first model in list
+        ollamaModel = availableModels[0].name;
+        localStorage.setItem("jp_vi_ollama_model", ollamaModel);
+      }
+      ollamaModelSelect.value = ollamaModel;
+    }
+  } catch (error) {
+    console.error("Ollama connection error:", error);
+    isOllamaConnected = false;
+    ollamaStatusLed.className = "status-led led-red";
+    ollamaStatusText.textContent = "Chưa kết nối";
+    
+    // Fallback static option list if disconnected
+    ollamaModelSelect.innerHTML = `
+      <option value="qwen2.5:1.5b">Qwen 2.5 1.5B (986MB)</option>
+      <option value="gemma4:e2b">Gemma 4 E2B (1.6GB)</option>
+      <option value="gemma4:e4b">Gemma 4 E4B (2.8GB)</option>
+      <option value="llama3.2:1b">Llama 3.2 1B (1.2GB)</option>
+    `;
+    ollamaModelSelect.value = ollamaModel;
   }
 }
 
@@ -510,6 +617,73 @@ async function translateText(text) {
     } catch (error) {
       console.error("WebLLM translation error:", error);
       translationOutput.textContent = "Lỗi khi chạy mô hình cục bộ: " + error.message;
+    }
+    return;
+  }
+
+  // Ollama Local Translation (CPU/GPU-accelerated)
+  if (currentEngine === "ollama") {
+    try {
+      const systemPrompt = isJaToVi
+        ? `You are a professional Japanese to Vietnamese translator. Translate the input Japanese text to Vietnamese and provide the Hiragana reading of the Japanese text. You must return a JSON object with this schema: { "translation": "Vietnamese translation", "hiragana": "Hiragana reading of the Japanese text (convert Kanji to Hiragana, keep Hiragana/Katakana as is)" }`
+        : `You are a professional Vietnamese to Japanese translator. Translate the input Vietnamese text to Japanese and provide the Hiragana reading of the Japanese translation. You must return a JSON object with this schema: { "translation": "Japanese translation", "hiragana": "Hiragana reading of the Japanese translation (convert Kanji to Hiragana, keep Hiragana/Katakana as is)" }`;
+
+      const response = await fetch("/api/ollama/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: ollamaModel,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: text }
+          ],
+          format: "json", // Constrains output to JSON
+          stream: false
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Ollama trả về mã lỗi: ${response.status}`);
+      }
+
+      const replyData = await response.json();
+      const rawContent = replyData.message.content.trim();
+      const data = JSON.parse(rawContent);
+
+      const translation = data.translation || "";
+      const hiragana = data.hiragana || "";
+
+      if (translation) {
+        translationOutput.textContent = translation;
+
+        // Update Hiragana UI based on current translation direction
+        if (hiragana) {
+          if (isJaToVi) {
+            inputHiraganaOutput.textContent = hiragana;
+            inputHiraganaContainer.classList.remove("hidden");
+            outputHiraganaContainer.classList.add("hidden");
+          } else {
+            outputHiraganaOutput.textContent = hiragana;
+            outputHiraganaContainer.classList.remove("hidden");
+            inputHiraganaContainer.classList.add("hidden");
+          }
+        } else {
+          inputHiraganaContainer.classList.add("hidden");
+          outputHiraganaContainer.classList.add("hidden");
+        }
+
+        // Add to History
+        const jaText = isJaToVi ? text : translation;
+        const viText = isJaToVi ? translation : text;
+        saveToHistory(jaText, viText, hiragana);
+      } else {
+        translationOutput.textContent = "Không nhận được phản hồi phù hợp từ mô hình local.";
+      }
+    } catch (error) {
+      console.error("Ollama translation error:", error);
+      translationOutput.innerHTML = `<span style="color: #ff5252; font-size: 13px;"><i class="fa-solid fa-triangle-exclamation"></i> Lỗi kết nối Ollama: ${error.message}. Hãy đảm bảo Ollama đang chạy và bạn đã tải mô hình bằng lệnh: <code style="display:block;background:rgba(0,0,0,0.3);padding:4px;margin-top:4px;user-select:all;">ollama run ${ollamaModel}</code></span>`;
     }
     return;
   }

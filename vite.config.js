@@ -15,5 +15,12 @@ export default defineConfig({
       ca: fs.readFileSync(path.resolve(certDir, 'ca.crt')),
     },
     strictPort: true,
+    proxy: {
+      '/api/ollama': {
+        target: 'http://localhost:11434',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/ollama/, ''),
+      },
+    },
   },
 });
