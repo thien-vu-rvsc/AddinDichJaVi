@@ -684,7 +684,8 @@ input:checked + .slider:before {
   box-shadow: var(--shadow-neon);
 }
 
-.output-header-actions {
+.output-header-actions,
+.input-header-actions {
   display: flex;
   gap: 8px;
 }

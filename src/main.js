@@ -445,6 +445,17 @@ function initApp() {
     }
   });
 
+  // Copy Input Text Button Click Event
+  const copyInputBtn = document.getElementById("copy-input-btn");
+  if (copyInputBtn) {
+    copyInputBtn.addEventListener("click", () => {
+      const text = sourceTextEl.value.trim();
+      if (text) {
+        copyToClipboard(text, "Đã sao chép văn bản gốc!");
+      }
+    });
+  }
+
   // Clear All History Button Click Event
   clearHistoryBtn.addEventListener("click", () => {
     localStorage.removeItem("jp_vi_history");
@@ -689,20 +700,20 @@ async function checkSdkAgentConnection() {
 // Update UI text based on current translation direction
 function updateLanguageUI() {
   if (isJaToVi) {
-    sourceLangTitle.textContent = "Tiếng Nhật";
-    targetLangTitle.textContent = "Tiếng Việt";
-    inputLangLabel.innerHTML = '<i class="fa-solid fa-location-dot"></i> Tiếng Nhật';
-    outputLangLabel.innerHTML = '<i class="fa-solid fa-circle-check"></i> Tiếng Việt';
+    sourceLangTitle.textContent = "JP";
+    targetLangTitle.textContent = "VI";
+    inputLangLabel.innerHTML = '<i class="fa-solid fa-location-dot"></i> JP';
+    outputLangLabel.innerHTML = '<i class="fa-solid fa-circle-check"></i> VI';
     sourceTextEl.placeholder = "Quét chọn văn bản tiếng Nhật trong tài liệu hoặc nhập tại đây...";
     
     // JA -> VI: Show source speech button, hide target speech button
     ttsBtnEl.classList.remove("hidden");
     ttsOutputBtn.classList.add("hidden");
   } else {
-    sourceLangTitle.textContent = "Tiếng Việt";
-    targetLangTitle.textContent = "Tiếng Nhật";
-    inputLangLabel.innerHTML = '<i class="fa-solid fa-location-dot"></i> Tiếng Việt';
-    outputLangLabel.innerHTML = '<i class="fa-solid fa-circle-check"></i> Tiếng Nhật';
+    sourceLangTitle.textContent = "VI";
+    targetLangTitle.textContent = "JP";
+    inputLangLabel.innerHTML = '<i class="fa-solid fa-location-dot"></i> VI';
+    outputLangLabel.innerHTML = '<i class="fa-solid fa-circle-check"></i> JP';
     sourceTextEl.placeholder = "Quét chọn văn bản tiếng Việt trong tài liệu hoặc nhập tại đây...";
     
     // VI -> JA: Hide source speech button, show target speech button (for Japanese output)
@@ -1044,10 +1055,10 @@ function speakJapanese(text) {
 }
 
 // Copy Text to Clipboard
-async function copyToClipboard(text) {
+async function copyToClipboard(text, successMsg = "Đã sao chép bản dịch!") {
   try {
     await navigator.clipboard.writeText(text);
-    showToast("Đã sao chép bản dịch!");
+    showToast(successMsg);
   } catch (err) {
     // Fallback using temp textarea
     const tempTextarea = document.createElement("textarea");
@@ -1057,7 +1068,7 @@ async function copyToClipboard(text) {
     tempTextarea.select();
     try {
       document.execCommand("copy");
-      showToast("Đã sao chép bản dịch!");
+      showToast(successMsg);
     } catch (e) {
       showToast("Không thể tự động sao chép.");
     }

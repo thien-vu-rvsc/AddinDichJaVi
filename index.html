@@ -19,11 +19,11 @@
       <!-- Top Language Swap Bar -->
       <div class="lang-swap-container">
         <div class="lang-swap-left">
-          <span id="source-lang-title" class="lang-title">Tiếng Nhật</span>
+          <span id="source-lang-title" class="lang-title">JP</span>
           <button id="swap-lang-btn" class="icon-btn swap-btn" title="Đổi chiều dịch">
             <i class="fa-solid fa-right-left"></i>
           </button>
-          <span id="target-lang-title" class="lang-title">Tiếng Việt</span>
+          <span id="target-lang-title" class="lang-title">VI</span>
         </div>
         <div class="lang-swap-right" style="display: flex; align-items: center; gap: 8px;">
           <button id="theme-toggle-btn" class="icon-btn" title="Chuyển chế độ sáng/tối">
@@ -53,10 +53,15 @@
           <!-- Selection Section / Input Card -->
           <div class="card card-input">
             <div class="card-header">
-              <span id="input-lang-label" class="lang-label"><i class="fa-solid fa-location-dot"></i> Tiếng Nhật</span>
-              <button id="tts-btn" class="icon-btn" title="Phát âm" disabled>
-                <i class="fa-solid fa-volume-high"></i>
-              </button>
+              <span id="input-lang-label" class="lang-label"><i class="fa-solid fa-location-dot"></i> JP</span>
+              <div class="input-header-actions">
+                <button id="tts-btn" class="icon-btn" title="Phát âm" disabled>
+                  <i class="fa-solid fa-volume-high"></i>
+                </button>
+                <button id="copy-input-btn" class="icon-btn" title="Sao chép văn bản gốc">
+                  <i class="fa-solid fa-copy"></i>
+                </button>
+              </div>
             </div>
             <textarea id="source-text" placeholder="Quét chọn văn bản trong tài liệu hoặc nhập tại đây..."></textarea>
             
@@ -82,7 +87,7 @@
           <!-- Result Section / Output Card -->
           <div id="result-card" class="card card-result hidden">
             <div class="card-header">
-              <span id="output-lang-label" class="lang-label"><i class="fa-solid fa-circle-check"></i> Tiếng Việt</span>
+              <span id="output-lang-label" class="lang-label"><i class="fa-solid fa-circle-check"></i> VI</span>
               <div class="output-header-actions">
                 <button id="tts-output-btn" class="icon-btn hidden" title="Phát âm tiếng Nhật">
                   <i class="fa-solid fa-volume-high"></i>
