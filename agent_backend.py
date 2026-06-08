@@ -28,6 +28,7 @@ class TranslationRequest(BaseModel):
     text: str
     source_lang: str
     target_lang: str
+    api_key: str = None
 
 class TranslationResponse(BaseModel):
     translation: str
@@ -71,11 +72,13 @@ Ensure your output contains ONLY the JSON block. Do not wrap it in markdown or a
 """
 
     cmd = [agentapi_path, "agentapi", "new-conversation", "--model=flash_lite", prompt]
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(cmd, capture_output=True)
+    stdout_str = result.stdout.decode('utf-8', errors='replace')
+    stderr_str = result.stderr.decode('utf-8', errors='replace')
     if result.returncode != 0:
-        raise Exception(f"Failed to start Antigravity agent: {result.stderr or result.stdout}")
+        raise Exception(f"Failed to start Antigravity agent: {stderr_str or stdout_str}")
         
-    data = json.loads(result.stdout)
+    data = json.loads(stdout_str)
     conversation_id = data["response"]["newConversation"]["conversationId"]
     
     transcript_path = os.path.join(
@@ -131,10 +134,12 @@ async def translate(request: TranslationRequest):
         raise HTTPException(status_code=400, detail="Văn bản cần dịch không được để trống.")
 
     try:
-        # Mode 1: Antigravity Agent logic using custom local API Key if configured
-        api_key = os.getenv("GEMINI_API_KEY")
+        # Check if api_key is provided in the request payload, otherwise fall back to environment variable
+        api_key = request.api_key or os.getenv("GEMINI_API_KEY")
 
         if api_key:
+            # Mode 1: Translation using custom API Key (Gemini API)
+            print("Using custom API Key for translation...")
             import google.generativeai as genai
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel('gemini-1.5-flash')
@@ -173,24 +178,22 @@ Ensure your output contains ONLY the JSON block. Do not wrap it in markdown or a
         else:
             # Mode 2: Call internal Antigravity Agent (without local API Key)
             try:
-                print("GEMINI_API_KEY is not set. Attempting to call internal Antigravity Agent API...")
+                print("No API Key configured. Attempting to call internal Antigravity Agent API...")
                 agent_res = call_antigravity_agent_api(text, src, tgt)
                 return TranslationResponse(
                     translation=agent_res.get("translation", ""),
                     hiragana=agent_res.get("hiragana", "")
                 )
             except Exception as agent_err:
-                # Mode 3: Fallback to Demo Mode if internal API call fails
-                print(f"Internal Antigravity Agent API call failed: {agent_err}. Falling back to demo mode.")
-                if src == "ja":
-                    translation = f"[Demo Agent] Đây là bản dịch mẫu tiếng Việt cho: '{text}'"
-                    hiragana = "これはにほんごのふりがなです / kore wa nihongo no furigana desu"
-                else:
-                    translation = f"[Demo Agent] Đây là bản dịch mẫu tiếng Nhật cho: '{text}'"
-                    hiragana = "はい、これはベトナムごからのほんやくです / hai, kore wa betonamugo kara no hon'yaku desu"
-                    
-                return TranslationResponse(translation=translation, hiragana=hiragana)
+                print(f"Internal Antigravity Agent API call failed: {agent_err}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Lỗi kết nối hoặc xử lý của Antigravity Agent: {str(agent_err)}"
+                )
 
+    except HTTPException:
+        # Re-raise HTTPExceptions
+        raise
     except Exception as e:
         print("Translation endpoint error:", e)
         raise HTTPException(status_code=500, detail=str(e))
