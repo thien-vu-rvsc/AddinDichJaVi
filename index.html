@@ -131,6 +131,7 @@
                 <option value="google">Google Translate (Online - Miễn phí)</option>
                 <option value="webllm">WebLLM (In-Browser Offline - Cần GPU)</option>
                 <option value="ollama">Ollama Local LLM (Offline - Tối ưu cho CPU)</option>
+                <option value="sdkagent">Antigravity SDK Agent (Python Backend)</option>
               </select>
             </div>
 
@@ -202,6 +203,37 @@
                 <span style="font-size: 10px;">
                   Dành cho máy tính <strong>không có GPU, chỉ có CPU</strong>. Vui lòng cài đặt <a href="https://ollama.com" target="_blank" style="color: var(--accent-cyan); text-decoration: underline;">Ollama</a> và chạy lệnh sau trong cmd/terminal của máy bạn để tải mô hình trước khi dịch:
                   <code style="display: block; background: rgba(0, 0, 0, 0.3); padding: 4px; border-radius: 4px; margin-top: 4px; font-family: monospace; user-select: all;">ollama run gemma4:e2b</code>
+                </span>
+              </div>
+            </div>
+
+            <!-- Antigravity SDK Agent Specific Settings -->
+            <div id="sdkagent-settings-group" class="webllm-settings hidden">
+              <div class="settings-group">
+                <div class="ollama-status-container" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                  <label class="settings-label" style="margin-bottom: 0;">Trạng thái Backend Agent:</label>
+                  <div class="ollama-status-badge" style="display: flex; align-items: center; gap: 6px;">
+                    <span id="sdkagent-status-led" class="status-led led-red"></span>
+                    <span id="sdkagent-status-text" style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">Chưa kết nối</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="settings-group">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                  <label for="sdkagent-url-input" class="settings-label">Địa chỉ API Backend (Python):</label>
+                  <button id="sdkagent-refresh-btn" class="icon-btn" title="Kiểm tra kết nối" style="width: 24px; height: 24px; font-size: 10px;">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                  </button>
+                </div>
+                <input type="text" id="sdkagent-url-input" class="settings-select" style="text-align: left; cursor: text; padding: 4px 8px; font-family: monospace;" value="http://localhost:8000/translate" />
+              </div>
+
+              <div class="settings-help" style="background: hsla(182, 100%, 50%, 0.02); border-color: rgba(0, 242, 254, 0.15);">
+                <i class="fa-solid fa-server" style="color: var(--accent-cyan);"></i>
+                <span style="font-size: 10px;">
+                  Dịch thông qua **Antigravity SDK Agent** chạy trên máy chủ Python cục bộ (FastAPI). Hãy đảm bảo bạn đã chạy server backend tại cổng 8000 và đã cài đặt thư viện:
+                  <code style="display: block; background: rgba(0, 0, 0, 0.3); padding: 4px; border-radius: 4px; margin-top: 4px; font-family: monospace; user-select: all;">pip install fastapi uvicorn google-antigravity</code>
                 </span>
               </div>
             </div>

@@ -51,6 +51,13 @@ const ollamaModelSelect = document.getElementById("ollama-model-select");
 const ollamaRefreshBtn = document.getElementById("ollama-refresh-btn");
 const phoneticSelect = document.getElementById("phonetic-select");
 
+// Antigravity SDK Agent UI Element References
+const sdkagentSettingsGroup = document.getElementById("sdkagent-settings-group");
+const sdkagentStatusLed = document.getElementById("sdkagent-status-led");
+const sdkagentStatusText = document.getElementById("sdkagent-status-text");
+const sdkagentUrlInput = document.getElementById("sdkagent-url-input");
+const sdkagentRefreshBtn = document.getElementById("sdkagent-refresh-btn");
+
 // State Variables
 let isAutoTranslate = true;
 let isSelectionHandlerRegistered = false;
@@ -68,6 +75,8 @@ let webllmEngine = null;
 let isWebllmLoading = false;
 let ollamaModel = localStorage.getItem("jp_vi_ollama_model") || "qwen2.5:1.5b";
 let isOllamaConnected = false;
+let sdkagentUrl = localStorage.getItem("jp_vi_sdkagent_url") || "http://localhost:8000/translate";
+let isSdkAgentConnected = false;
 
 // Theme Toggle Reference & State
 const themeToggleBtn = document.getElementById("theme-toggle-btn");
@@ -221,6 +230,8 @@ function initApp() {
       } else if (targetTab === "tab-settings") {
         if (currentEngine === "ollama") {
           checkOllamaConnection();
+        } else if (currentEngine === "sdkagent") {
+          checkSdkAgentConnection();
         }
       }
     });
@@ -235,6 +246,8 @@ function initApp() {
       updateEngineUI();
       if (currentEngine === "ollama") {
         checkOllamaConnection();
+      } else if (currentEngine === "sdkagent") {
+        checkSdkAgentConnection();
       }
     });
   }
@@ -274,6 +287,23 @@ function initApp() {
   if (ollamaRefreshBtn) {
     ollamaRefreshBtn.addEventListener("click", () => {
       checkOllamaConnection();
+    });
+  }
+
+  // SDK Agent URL Input Event
+  if (sdkagentUrlInput) {
+    sdkagentUrlInput.value = sdkagentUrl;
+    sdkagentUrlInput.addEventListener("change", (e) => {
+      sdkagentUrl = e.target.value.trim();
+      localStorage.setItem("jp_vi_sdkagent_url", sdkagentUrl);
+      checkSdkAgentConnection();
+    });
+  }
+
+  // SDK Agent Refresh Button Event
+  if (sdkagentRefreshBtn) {
+    sdkagentRefreshBtn.addEventListener("click", () => {
+      checkSdkAgentConnection();
     });
   }
 
@@ -373,6 +403,7 @@ function updateEngineUI() {
   if (currentEngine === "webllm") {
     if (webllmSettingsGroup) webllmSettingsGroup.classList.remove("hidden");
     if (ollamaSettingsGroup) ollamaSettingsGroup.classList.add("hidden");
+    if (sdkagentSettingsGroup) sdkagentSettingsGroup.classList.add("hidden");
     if (sourceTextEl) {
       sourceTextEl.placeholder = isJaToVi 
         ? "Quét chọn văn bản tiếng Nhật hoặc tự nhập để dịch offline..."
@@ -399,14 +430,25 @@ function updateEngineUI() {
   } else if (currentEngine === "ollama") {
     if (webllmSettingsGroup) webllmSettingsGroup.classList.add("hidden");
     if (ollamaSettingsGroup) ollamaSettingsGroup.classList.remove("hidden");
+    if (sdkagentSettingsGroup) sdkagentSettingsGroup.classList.add("hidden");
     if (sourceTextEl) {
       sourceTextEl.placeholder = isJaToVi 
         ? "Quét chọn văn bản tiếng Nhật hoặc tự nhập để dịch offline (CPU)..."
         : "Quét chọn văn bản tiếng Việt hoặc tự nhập để dịch offline (CPU)...";
     }
+  } else if (currentEngine === "sdkagent") {
+    if (webllmSettingsGroup) webllmSettingsGroup.classList.add("hidden");
+    if (ollamaSettingsGroup) ollamaSettingsGroup.classList.add("hidden");
+    if (sdkagentSettingsGroup) sdkagentSettingsGroup.classList.remove("hidden");
+    if (sourceTextEl) {
+      sourceTextEl.placeholder = isJaToVi 
+        ? "Quét chọn văn bản tiếng Nhật hoặc tự nhập để dịch qua Agent (Python)..."
+        : "Quét chọn văn bản tiếng Việt hoặc tự nhập để dịch qua Agent (Python)...";
+    }
   } else {
     if (webllmSettingsGroup) webllmSettingsGroup.classList.add("hidden");
     if (ollamaSettingsGroup) ollamaSettingsGroup.classList.add("hidden");
+    if (sdkagentSettingsGroup) sdkagentSettingsGroup.classList.add("hidden");
     if (sourceTextEl) {
       sourceTextEl.placeholder = isJaToVi
         ? "Quét chọn văn bản tiếng Nhật trong tài liệu hoặc nhập tại đây..."
@@ -544,6 +586,43 @@ async function checkOllamaConnection() {
       <option value="llama3.2:1b">Llama 3.2 1B (1.2GB)</option>
     `;
     ollamaModelSelect.value = ollamaModel;
+  }
+}
+
+// Check connection of Antigravity SDK Agent backend
+async function checkSdkAgentConnection() {
+  if (!sdkagentStatusLed || !sdkagentStatusText) return;
+
+  sdkagentStatusLed.className = "status-led led-orange";
+  sdkagentStatusText.textContent = "Đang kết nối...";
+
+  try {
+    let pingUrl = "http://localhost:8000/";
+    try {
+      const parsedUrl = new URL(sdkagentUrl);
+      pingUrl = parsedUrl.origin + "/";
+    } catch (e) {
+      // Fallback
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+    const response = await fetch(pingUrl, {
+      method: "GET",
+      signal: controller.signal,
+      mode: "no-cors"
+    });
+    
+    clearTimeout(timeoutId);
+    isSdkAgentConnected = true;
+    sdkagentStatusLed.className = "status-led led-green";
+    sdkagentStatusText.textContent = "Đã kết nối";
+  } catch (error) {
+    console.error("SDK Agent connection error:", error);
+    isSdkAgentConnected = false;
+    sdkagentStatusLed.className = "status-led led-red";
+    sdkagentStatusText.textContent = "Chưa kết nối";
   }
 }
 
@@ -778,6 +857,61 @@ async function translateText(text) {
     } catch (error) {
       console.error("Ollama translation error:", error);
       translationOutput.innerHTML = `<span style="color: #ff5252; font-size: 13px;"><i class="fa-solid fa-triangle-exclamation"></i> Lỗi kết nối Ollama: ${error.message}. Hãy đảm bảo Ollama đang chạy và bạn đã tải mô hình bằng lệnh: <code style="display:block;background:rgba(0,0,0,0.3);padding:4px;margin-top:4px;user-select:all;">ollama run ${ollamaModel}</code></span>`;
+    }
+    return;
+  }
+
+  // Antigravity SDK Agent Translation (Python FastAPI Backend)
+  if (currentEngine === "sdkagent") {
+    try {
+      const response = await fetch(sdkagentUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          text: text,
+          source_lang: isJaToVi ? "ja" : "vi",
+          target_lang: isJaToVi ? "vi" : "ja"
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Backend trả về mã lỗi: ${response.status}`);
+      }
+
+      const replyData = await response.json();
+      let translation = replyData.translation || "";
+      let hiragana = replyData.hiragana || "";
+
+      if (typeof replyData === "string") {
+        translation = replyData;
+      } else if (!translation && replyData.text) {
+        translation = replyData.text;
+      }
+
+      if (translation && (translation.startsWith("{") || translation.includes('{"translation"'))) {
+        const data = extractJSON(translation);
+        if (data) {
+          translation = data.translation || translation;
+          if (data.hiragana) hiragana = data.hiragana;
+        }
+      }
+
+      if (translation) {
+        translationOutput.textContent = translation;
+        displayPhonetics(hiragana, null);
+
+        // Add to History
+        const jaText = isJaToVi ? text : translation;
+        const viText = isJaToVi ? translation : text;
+        saveToHistory(jaText, viText, lastHiragana);
+      } else {
+        translationOutput.textContent = "Không nhận được phản hồi phù hợp từ Backend Agent.";
+      }
+    } catch (error) {
+      console.error("SDK Agent translation error:", error);
+      translationOutput.innerHTML = `<span style="color: #ff5252; font-size: 13px;"><i class="fa-solid fa-triangle-exclamation"></i> Lỗi kết nối API Backend: ${error.message}. Hãy đảm bảo server Python (FastAPI) đang chạy tại địa chỉ cấu hình và hỗ trợ yêu cầu POST JSON.</span>`;
     }
     return;
   }
