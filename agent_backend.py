@@ -46,6 +46,44 @@ async def health_check():
         "version": "1.0.0"
     }
 
+def cleanup_conversation(conversation_id: str):
+    import shutil
+    import time
+    
+    # Wait briefly for files to close handles
+    time.sleep(0.5)
+    
+    gemini_dir = r"C:\Users\fssv-vu-thien\.gemini\antigravity"
+    
+    # 1. Clean conversations folder
+    conv_dir = os.path.join(gemini_dir, "conversations")
+    if os.path.exists(conv_dir):
+        for ext in [".db", ".db-wal", ".db-shm", ".pb"]:
+            file_path = os.path.join(conv_dir, f"{conversation_id}{ext}")
+            if os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                except Exception as e:
+                    print(f"Error removing conversation file {file_path}: {e}")
+
+    # 2. Clean annotations folder
+    ann_dir = os.path.join(gemini_dir, "annotations")
+    if os.path.exists(ann_dir):
+        file_path = os.path.join(ann_dir, f"{conversation_id}.pbtxt")
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                print(f"Error removing annotation file {file_path}: {e}")
+
+    # 3. Clean brain folder
+    brain_dir = os.path.join(gemini_dir, "brain", conversation_id)
+    if os.path.exists(brain_dir):
+        try:
+            shutil.rmtree(brain_dir)
+        except Exception as e:
+            print(f"Error removing brain folder {conversation_id}: {e}")
+
 def call_antigravity_agent_api(text: str, src: str, tgt: str) -> dict:
     import subprocess
     import time
@@ -89,35 +127,45 @@ Ensure your output contains ONLY the JSON block. Do not wrap it in markdown or a
         "transcript.jsonl"
     )
     
-    # Poll for response
-    for _ in range(15):  # Wait up to 15 seconds
-        time.sleep(1)
-        if not os.path.exists(transcript_path):
-            continue
-            
-        with open(transcript_path, "r", encoding="utf-8") as f:
-            lines = f.readlines()
-            
-        for line in reversed(lines):
-            try:
-                step = json.loads(line)
-                if step.get("source") == "MODEL" and step.get("type") == "PLANNER_RESPONSE":
-                    content = step.get("content", "")
-                    # Ensure it's a final response and not a tool call response
-                    if content and not step.get("tool_calls"):
-                        cleaned_content = re.sub(r"^```json\s*", "", content.strip())
-                        cleaned_content = re.sub(r"\s*```$", "", cleaned_content)
-                        try:
-                            parsed_data = json.loads(cleaned_content)
-                            return {
-                                "translation": parsed_data.get("translation", ""),
-                                "hiragana": parsed_data.get("hiragana", "")
-                            }
-                        except Exception:
-                            return {"translation": content, "hiragana": ""}
-            except Exception:
-                pass
+    response_data = None
+    try:
+        # Poll for response
+        for _ in range(15):  # Wait up to 15 seconds
+            time.sleep(1)
+            if not os.path.exists(transcript_path):
+                continue
                 
+            with open(transcript_path, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+                
+            for line in reversed(lines):
+                try:
+                    step = json.loads(line)
+                    if step.get("source") == "MODEL" and step.get("type") == "PLANNER_RESPONSE":
+                        content = step.get("content", "")
+                        # Ensure it's a final response and not a tool call response
+                        if content and not step.get("tool_calls"):
+                            cleaned_content = re.sub(r"^```json\s*", "", content.strip())
+                            cleaned_content = re.sub(r"\s*```$", "", cleaned_content)
+                            try:
+                                parsed_data = json.loads(cleaned_content)
+                                response_data = {
+                                    "translation": parsed_data.get("translation", ""),
+                                    "hiragana": parsed_data.get("hiragana", "")
+                                }
+                            except Exception:
+                                response_data = {"translation": content, "hiragana": ""}
+                            break
+                except Exception:
+                    pass
+            if response_data:
+                break
+    finally:
+        # Clean up temporary conversation files
+        cleanup_conversation(conversation_id)
+        
+    if response_data:
+        return response_data
     raise Exception("Timeout waiting for Antigravity Agent response.")
 
 @app.post("/translate", response_model=TranslationResponse)
