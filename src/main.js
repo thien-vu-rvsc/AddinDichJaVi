@@ -56,6 +56,7 @@ const sdkagentSettingsGroup = document.getElementById("sdkagent-settings-group")
 const sdkagentStatusLed = document.getElementById("sdkagent-status-led");
 const sdkagentStatusText = document.getElementById("sdkagent-status-text");
 const sdkagentUrlInput = document.getElementById("sdkagent-url-input");
+const sdkagentKeyInput = document.getElementById("sdkagent-key-input");
 const sdkagentRefreshBtn = document.getElementById("sdkagent-refresh-btn");
 
 // State Variables
@@ -76,6 +77,7 @@ let isWebllmLoading = false;
 let ollamaModel = localStorage.getItem("jp_vi_ollama_model") || "qwen2.5:1.5b";
 let isOllamaConnected = false;
 let sdkagentUrl = localStorage.getItem("jp_vi_sdkagent_url") || "http://localhost:8000/translate";
+let sdkagentKey = localStorage.getItem("jp_vi_sdkagent_key") || "";
 let isSdkAgentConnected = false;
 
 // Theme Toggle Reference & State
@@ -297,6 +299,15 @@ function initApp() {
       sdkagentUrl = e.target.value.trim();
       localStorage.setItem("jp_vi_sdkagent_url", sdkagentUrl);
       checkSdkAgentConnection();
+    });
+  }
+
+  // SDK Agent API Key Input Event
+  if (sdkagentKeyInput) {
+    sdkagentKeyInput.value = sdkagentKey;
+    sdkagentKeyInput.addEventListener("change", (e) => {
+      sdkagentKey = e.target.value.trim();
+      localStorage.setItem("jp_vi_sdkagent_key", sdkagentKey);
     });
   }
 
@@ -872,7 +883,8 @@ async function translateText(text) {
         body: JSON.stringify({
           text: text,
           source_lang: isJaToVi ? "ja" : "vi",
-          target_lang: isJaToVi ? "vi" : "ja"
+          target_lang: isJaToVi ? "vi" : "ja",
+          api_key: sdkagentKey
         })
       });
 
