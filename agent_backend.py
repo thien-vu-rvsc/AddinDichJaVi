@@ -71,7 +71,7 @@ Ensure your output contains ONLY the JSON block. Do not wrap it in markdown or a
 """
 
     cmd = [agentapi_path, "agentapi", "new-conversation", "--model=flash_lite", prompt]
-    result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+    result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
         raise Exception(f"Failed to start Antigravity agent: {result.stderr or result.stdout}")
         
