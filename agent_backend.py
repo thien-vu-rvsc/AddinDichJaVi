@@ -29,6 +29,7 @@ class TranslationRequest(BaseModel):
     source_lang: str
     target_lang: str
     api_key: str = None
+    model: str = "flash_lite"
 
 class TranslationResponse(BaseModel):
     translation: str
@@ -84,7 +85,7 @@ def cleanup_conversation(conversation_id: str):
         except Exception as e:
             print(f"Error removing brain folder {conversation_id}: {e}")
 
-def call_antigravity_agent_api(text: str, src: str, tgt: str) -> dict:
+def call_antigravity_agent_api(text: str, src: str, tgt: str, model: str = "flash_lite") -> dict:
     import subprocess
     import time
     
@@ -109,7 +110,7 @@ Return your response in the following strict JSON format:
 Ensure your output contains ONLY the JSON block. Do not wrap it in markdown or add explanations.
 """
 
-    cmd = [agentapi_path, "agentapi", "new-conversation", "--model=flash_lite", prompt]
+    cmd = [agentapi_path, "agentapi", "new-conversation", f"--model={model}", prompt]
     result = subprocess.run(cmd, capture_output=True)
     stdout_str = result.stdout.decode('utf-8', errors='replace')
     stderr_str = result.stderr.decode('utf-8', errors='replace')
@@ -227,7 +228,7 @@ Ensure your output contains ONLY the JSON block. Do not wrap it in markdown or a
             # Mode 2: Call internal Antigravity Agent (without local API Key)
             try:
                 print("No API Key configured. Attempting to call internal Antigravity Agent API...")
-                agent_res = call_antigravity_agent_api(text, src, tgt)
+                agent_res = call_antigravity_agent_api(text, src, tgt, model=request.model)
                 return TranslationResponse(
                     translation=agent_res.get("translation", ""),
                     hiragana=agent_res.get("hiragana", "")
@@ -246,6 +247,66 @@ Ensure your output contains ONLY the JSON block. Do not wrap it in markdown or a
         print("Translation endpoint error:", e)
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/cleanup-history")
+async def cleanup_history():
+    """
+    Scans and deletes all temporary translation conversations, preserving 
+    the active developer conversations.
+    """
+    import shutil
+    
+    # IDs of important active development conversations to keep
+    CONVERSATIONS_TO_KEEP = {
+        "5aae4e8f-2ca2-4329-9402-17d64317e638", # Current conversation
+        "63406780-76b6-4b11-99ce-498efcf02b07"  # Integrating Antigravity SDK Agent
+    }
+
+    gemini_dir = r"C:\Users\fssv-vu-thien\.gemini\antigravity"
+    deleted_count = 0
+    
+    try:
+        # 1. Clean conversations folder
+        conv_dir = os.path.join(gemini_dir, "conversations")
+        if os.path.exists(conv_dir):
+            for filename in os.listdir(conv_dir):
+                conv_id = os.path.splitext(filename)[0]
+                if conv_id.endswith(".db"):
+                    conv_id = os.path.splitext(conv_id)[0]
+                    
+                if conv_id not in CONVERSATIONS_TO_KEEP:
+                    file_path = os.path.join(conv_dir, filename)
+                    try:
+                        os.remove(file_path)
+                        deleted_count += 1
+                    except Exception as e:
+                        print(f"Failed to delete {filename}: {e}")
+
+        # 2. Clean annotations folder
+        ann_dir = os.path.join(gemini_dir, "annotations")
+        if os.path.exists(ann_dir):
+            for filename in os.listdir(ann_dir):
+                conv_id = os.path.splitext(filename)[0]
+                if conv_id not in CONVERSATIONS_TO_KEEP:
+                    file_path = os.path.join(ann_dir, filename)
+                    try:
+                        os.remove(file_path)
+                    except Exception as e:
+                        print(f"Failed to delete {filename}: {e}")
+
+        # 3. Clean brain folder
+        brain_dir = os.path.join(gemini_dir, "brain")
+        if os.path.exists(brain_dir):
+            for foldername in os.listdir(brain_dir):
+                if foldername not in CONVERSATIONS_TO_KEEP and foldername != "tempmediaStorage":
+                    folder_path = os.path.join(brain_dir, foldername)
+                    try:
+                        shutil.rmtree(folder_path)
+                    except Exception as e:
+                        print(f"Failed to delete brain folder {foldername}: {e}")
+                        
+        return {"status": "ok", "message": f"Dọn dẹp hoàn tất. Đã xóa {deleted_count} tệp tin hội thoại."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi dọn dẹp lịch sử: {str(e)}")
 if __name__ == "__main__":
     print("Starting Antigravity SDK Agent translation server on http://localhost:8000")
     uvicorn.run("agent_backend:app", host="127.0.0.1", port=8000, reload=True)

@@ -57,6 +57,8 @@ const sdkagentStatusLed = document.getElementById("sdkagent-status-led");
 const sdkagentStatusText = document.getElementById("sdkagent-status-text");
 const sdkagentUrlInput = document.getElementById("sdkagent-url-input");
 const sdkagentKeyInput = document.getElementById("sdkagent-key-input");
+const sdkagentModelSelect = document.getElementById("sdkagent-model-select");
+const sdkagentCleanupBtn = document.getElementById("sdkagent-cleanup-btn");
 const sdkagentRefreshBtn = document.getElementById("sdkagent-refresh-btn");
 
 // State Variables
@@ -78,6 +80,7 @@ let ollamaModel = localStorage.getItem("jp_vi_ollama_model") || "qwen2.5:1.5b";
 let isOllamaConnected = false;
 let sdkagentUrl = localStorage.getItem("jp_vi_sdkagent_url") || "http://localhost:8000/translate";
 let sdkagentKey = localStorage.getItem("jp_vi_sdkagent_key") || "";
+let sdkagentModel = localStorage.getItem("jp_vi_sdkagent_model") || "flash_lite";
 let isSdkAgentConnected = false;
 
 // Theme Toggle Reference & State
@@ -315,6 +318,52 @@ function initApp() {
   if (sdkagentRefreshBtn) {
     sdkagentRefreshBtn.addEventListener("click", () => {
       checkSdkAgentConnection();
+    });
+  }
+
+  // SDK Agent Model Dropdown Event
+  if (sdkagentModelSelect) {
+    sdkagentModelSelect.value = sdkagentModel;
+    sdkagentModelSelect.addEventListener("change", (e) => {
+      sdkagentModel = e.target.value;
+      localStorage.setItem("jp_vi_sdkagent_model", sdkagentModel);
+    });
+  }
+
+  // SDK Agent Cleanup Button Event
+  if (sdkagentCleanupBtn) {
+    sdkagentCleanupBtn.addEventListener("click", async () => {
+      const isConfirmed = confirm("Bạn có chắc chắn muốn xóa tất cả các cuộc hội thoại dịch thuật của Agent khỏi Antigravity không?");
+      if (!isConfirmed) return;
+      
+      sdkagentCleanupBtn.disabled = true;
+      const originalText = sdkagentCleanupBtn.innerHTML;
+      sdkagentCleanupBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xóa...';
+      
+      try {
+        // Resolve the cleanup URL from the base backend URL
+        let cleanupUrl = "http://localhost:8000/cleanup-history";
+        try {
+          const parsedUrl = new URL(sdkagentUrl);
+          cleanupUrl = parsedUrl.origin + "/cleanup-history";
+        } catch (e) {}
+        
+        const res = await fetch(cleanupUrl, {
+          method: "POST"
+        });
+        
+        if (!res.ok) {
+          throw new Error(`Mã lỗi: ${res.status}`);
+        }
+        
+        showToast("Đã dọn dẹp lịch sử hội thoại Agent thành công!");
+      } catch (err) {
+        console.error("Cleanup error:", err);
+        showToast("Không thể dọn dẹp lịch sử: " + err.message);
+      } finally {
+        sdkagentCleanupBtn.disabled = false;
+        sdkagentCleanupBtn.innerHTML = originalText;
+      }
     });
   }
 
@@ -884,7 +933,8 @@ async function translateText(text) {
           text: text,
           source_lang: isJaToVi ? "ja" : "vi",
           target_lang: isJaToVi ? "vi" : "ja",
-          api_key: sdkagentKey
+          api_key: sdkagentKey,
+          model: sdkagentModel
         })
       });
 

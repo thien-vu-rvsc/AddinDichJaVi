@@ -234,6 +234,21 @@
                 <input type="password" id="sdkagent-key-input" class="settings-select" style="text-align: left; cursor: text; padding: 4px 8px; font-family: monospace;" placeholder="Nhập API Key riêng nếu muốn sử dụng..." />
               </div>
 
+              <div class="settings-group" style="margin-top: 8px;">
+                <label for="sdkagent-model-select" class="settings-label">Model của Agent:</label>
+                <select id="sdkagent-model-select" class="settings-select">
+                  <option value="flash_lite">Gemini Flash-lite (Nhanh nhất)</option>
+                  <option value="flash">Gemini Flash (Cân bằng)</option>
+                  <option value="pro">Gemini Pro (Chất lượng cao)</option>
+                </select>
+              </div>
+
+              <div class="settings-group" style="margin-top: 12px;">
+                <button id="sdkagent-cleanup-btn" class="settings-btn" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; width: 100%; padding: 8px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(239, 68, 68, 0.25)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.15)'">
+                  <i class="fa-solid fa-trash-can" style="margin-right: 6px;"></i> Xóa hội thoại dịch của Agent
+                </button>
+              </div>
+
 
               <div class="settings-help" style="background: hsla(182, 100%, 50%, 0.02); border-color: rgba(0, 242, 254, 0.15);">
                 <i class="fa-solid fa-server" style="color: var(--accent-cyan);"></i>
