@@ -42,8 +42,9 @@ if (-not (Test-Path $catalogPath)) {
     New-Item -Path $registryPath -Name $guid -Force | Out-Null
 }
 
-# Set registry values
-Set-ItemProperty -Path $catalogPath -Name "Url" -Value $targetDir
+# Set registry values with loopback UNC path to bypass Office local catalog restrictions
+$uncDir = $targetDir -replace "^([A-Za-z]):", '\\localhost\$1$'
+Set-ItemProperty -Path $catalogPath -Name "Url" -Value $uncDir
 Set-ItemProperty -Path $catalogPath -Name "Flags" -Value 1 -Type DWord
 Set-ItemProperty -Path $catalogPath -Name "Type" -Value 1 -Type DWord
 
