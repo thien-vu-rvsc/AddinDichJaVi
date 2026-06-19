@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JP-VI Translator Add-in</title>
+    <!-- Microsoft Office.js -->
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    <!-- Google Fonts: Outfit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script type="module" crossorigin src="./assets/index-GSs7C8wb.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DvQtlX-t.css">
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Top Language Swap Bar -->
+      <div class="lang-swap-container">
+        <div class="lang-swap-left">
+          <span id="source-lang-title" class="lang-title">JP</span>
+          <button id="swap-lang-btn" class="icon-btn swap-btn" title="Đổi chiều dịch">
+            <i class="fa-solid fa-right-left"></i>
+          </button>
+          <span id="target-lang-title" class="lang-title">VI</span>
+        </div>
+        <div class="lang-swap-right" style="display: flex; align-items: center; gap: 8px;">
+          <button id="theme-toggle-btn" class="icon-btn" title="Chuyển chế độ sáng/tối">
+            <i class="fa-solid fa-sun"></i>
+          </button>
+          <span id="host-badge" class="badge">Đang kết nối...</span>
+        </div>
+      </div>
+
+      <!-- Tabs Navigation -->
+      <nav class="app-tabs">
+        <button id="tab-quick-btn" class="tab-btn active" data-tab="tab-quick">
+          <i class="fa-solid fa-language"></i> Dịch Nhanh
+        </button>
+        <button id="tab-history-btn" class="tab-btn" data-tab="tab-history">
+          <i class="fa-solid fa-clock-rotate-left"></i> Lịch Sử
+        </button>
+        <button id="tab-settings-btn" class="tab-btn" data-tab="tab-settings">
+          <i class="fa-solid fa-gear"></i> Cài Đặt
+        </button>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="app-content">
+        <!-- Tab 1: Dịch Nhanh -->
+        <section id="tab-quick" class="tab-pane active">
+          <!-- Selection Section / Input Card -->
+          <div class="card card-input">
+            <div class="card-header">
+              <span id="input-lang-label" class="lang-label"><i class="fa-solid fa-location-dot"></i> JP</span>
+              <div class="input-header-actions">
+                <button id="tts-btn" class="icon-btn" title="Phát âm" disabled>
+                  <i class="fa-solid fa-volume-high"></i>
+                </button>
+                <button id="copy-input-btn" class="icon-btn" title="Sao chép văn bản gốc">
+                  <i class="fa-solid fa-copy"></i>
+                </button>
+              </div>
+            </div>
+            <textarea id="source-text" placeholder="Quét chọn văn bản trong tài liệu hoặc nhập tại đây..."></textarea>
+            
+            <!-- Hiragana inside Input Card (for JA -> VI source text) -->
+            <div id="input-hiragana-container" class="romaji-box hidden">
+              <span id="input-hiragana-output" class="romaji-text"></span>
+            </div>
+
+            <div class="card-footer">
+              <label class="switch-container">
+                <input type="checkbox" id="auto-translate-switch" checked />
+                <span class="slider"></span>
+                <span class="switch-label">Tự động dịch khi quét chọn</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          <button id="translate-btn" class="btn btn-primary">
+            <i class="fa-solid fa-magnifying-glass-translation"></i> Dịch Văn Bản
+          </button>
+
+          <!-- Result Section / Output Card -->
+          <div id="result-card" class="card card-result hidden">
+            <div class="card-header">
+              <span id="output-lang-label" class="lang-label"><i class="fa-solid fa-circle-check"></i> VI</span>
+              <div class="output-header-actions">
+                <button id="tts-output-btn" class="icon-btn hidden" title="Phát âm tiếng Nhật">
+                  <i class="fa-solid fa-volume-high"></i>
+                </button>
+                <button id="copy-btn" class="icon-btn" title="Sao chép bản dịch">
+                  <i class="fa-solid fa-copy"></i>
+                </button>
+              </div>
+            </div>
+            <div id="translation-output" class="output-text"></div>
+            
+            <!-- Hiragana inside Output Card (for VI -> JA translated text) -->
+            <div id="output-hiragana-container" class="romaji-box hidden">
+              <span id="output-hiragana-output" class="romaji-text"></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 2: Lịch Sử -->
+        <section id="tab-history" class="tab-pane">
+          <div class="history-header">
+            <h3>Lịch sử dịch gần đây</h3>
+            <button id="clear-history-btn" class="btn btn-danger-link">
+              <i class="fa-solid fa-trash-can"></i> Xóa tất cả
+            </button>
+          </div>
+          <div id="history-list" class="history-list">
+            <!-- Items will be injected dynamically -->
+            <div class="empty-history">
+              <i class="fa-regular fa-folder-open"></i>
+              <p>Chưa có lịch sử dịch thuật</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 3: Cài Đặt -->
+        <section id="tab-settings" class="tab-pane">
+          <!-- Phonetic Display Settings -->
+          <div class="card card-settings">
+            <div class="card-header">
+              <span class="lang-label"><i class="fa-solid fa-eye"></i> Hiển thị Phiên âm (Phonetic)</span>
+            </div>
+            
+            <div class="settings-group">
+              <label for="phonetic-select" class="settings-label">Kiểu phiên âm:</label>
+              <select id="phonetic-select" class="settings-select">
+                <option value="hiragana">Chỉ hiển thị Hiragana (にほんご)</option>
+                <option value="romaji">Chỉ hiển thị Romaji (nihongo)</option>
+                <option value="both">Hiển thị cả hai (にほんご / nihongo)</option>
+              </select>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- Toast Notification -->
+      <div id="toast" class="toast hidden">
+        <i class="fa-solid fa-circle-info"></i> <span id="toast-message">Đã sao chép!</span>
+      </div>
+    </div>
+
+    <!-- Script Entry Point -->
+  </body>
+</html>

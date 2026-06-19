@@ -1,0 +1,37 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# PyInstaller & Installer builds
+build/
+*.spec
+jp_vi_translator_installer/
+jp_vi_translator_installer.zip
+
+# Local certificates
+localhost.crt
+localhost.key
+localhost.crt.old
+localhost.key.old
+agent_backend.exe.old
