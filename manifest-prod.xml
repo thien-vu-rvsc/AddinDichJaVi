@@ -12,9 +12,9 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="JP-VI Translator" />
   <Description DefaultValue="Dịch từ vựng và đoạn văn từ tiếng Nhật sang tiếng Việt cục bộ và miễn phí." />
-  <IconUrl DefaultValue="https://172.20.192.101:8443/assets/icon.png" />
-  <HighResolutionIconUrl DefaultValue="https://172.20.192.101:8443/assets/icon.png" />
-  <SupportUrl DefaultValue="https://172.20.192.101:8443" />
+  <IconUrl DefaultValue="https://thien-vu-rvsc.github.io/AddinDichJaVi/assets/icon.png" />
+  <HighResolutionIconUrl DefaultValue="https://thien-vu-rvsc.github.io/AddinDichJaVi/assets/icon.png" />
+  <SupportUrl DefaultValue="https://thien-vu-rvsc.github.io/AddinDichJaVi" />
   
   <Hosts>
     <Host Name="Workbook" />
@@ -23,7 +23,7 @@
   </Hosts>
   
   <DefaultSettings>
-    <SourceLocation DefaultValue="https://172.20.192.101:8443/index.html" />
+    <SourceLocation DefaultValue="https://thien-vu-rvsc.github.io/AddinDichJaVi/index.html" />
   </DefaultSettings>
   
   <Permissions>ReadDocument</Permissions>
@@ -150,13 +150,13 @@
     
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16x16" DefaultValue="https://172.20.192.101:8443/assets/icon.png" />
-        <bt:Image id="Icon.32x32" DefaultValue="https://172.20.192.101:8443/assets/icon.png" />
-        <bt:Image id="Icon.80x80" DefaultValue="https://172.20.192.101:8443/assets/icon.png" />
+        <bt:Image id="Icon.16x16" DefaultValue="https://thien-vu-rvsc.github.io/AddinDichJaVi/assets/icon.png" />
+        <bt:Image id="Icon.32x32" DefaultValue="https://thien-vu-rvsc.github.io/AddinDichJaVi/assets/icon.png" />
+        <bt:Image id="Icon.80x80" DefaultValue="https://thien-vu-rvsc.github.io/AddinDichJaVi/assets/icon.png" />
       </bt:Images>
       <bt:Urls>
-        <bt:Url id="Taskpane.Url" DefaultValue="https://172.20.192.101:8443/index.html" />
-        <bt:Url id="GetStarted.LearnMore" DefaultValue="https://172.20.192.101:8443" />
+        <bt:Url id="Taskpane.Url" DefaultValue="https://thien-vu-rvsc.github.io/AddinDichJaVi/index.html" />
+        <bt:Url id="GetStarted.LearnMore" DefaultValue="https://thien-vu-rvsc.github.io/AddinDichJaVi" />
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GetStarted.Title" DefaultValue="JP-VI Translator" />
