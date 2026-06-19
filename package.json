@@ -10,15 +10,17 @@
     "start:excel": "office-addin-debugging start manifest.xml desktop --app excel",
     "start:powerpoint": "office-addin-debugging start manifest.xml desktop --app powerpoint",
     "start:word": "office-addin-debugging start manifest.xml desktop --app word",
-    "stop": "office-addin-debugging stop manifest.xml"
+    "stop": "office-addin-debugging stop manifest.xml",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "devDependencies": {
+    "gh-pages": "^6.3.0",
     "office-addin-debugging": "^6.1.1",
     "office-addin-dev-certs": "^2.0.9",
     "vite": "^8.0.12"
   },
   "dependencies": {
-    "@mlc-ai/web-llm": "^0.2.84",
     "wanakana": "^5.3.1"
   }
 }

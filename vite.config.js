@@ -7,6 +7,7 @@ const homedir = os.homedir();
 const certDir = path.resolve(homedir, '.office-addin-dev-certs');
 
 export default defineConfig({
+  base: './',
   server: {
     port: 3000,
     https: {

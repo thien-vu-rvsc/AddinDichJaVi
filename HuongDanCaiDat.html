@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hướng Dẫn Cài Đặt & Sử Dụng JP-VI Translator</title>
+  <title>Hướng Dẫn Chạy JP-VI Translator Serverless Add-in</title>
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,18 +13,18 @@
   
   <style>
     :root {
-      --primary: #4f46e5;
-      --primary-hover: #4338ca;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
       --primary-light: #e0e7ff;
-      --bg: #0f172a;
-      --card-bg: #1e293b;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --border: #334155;
+      --bg: #090d16;
+      --card-bg: #111827;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --border: #1f2937;
       --success: #10b981;
       --warning: #f59e0b;
       --info: #0ea5e9;
-      --accent: #ec4899;
+      --accent: #00f2fe;
     }
 
     * {
@@ -48,7 +48,7 @@
 
     header {
       text-align: center;
-      margin-bottom: 50px;
+      margin-bottom: 40px;
       position: relative;
     }
 
@@ -56,9 +56,9 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: rgba(79, 70, 229, 0.15);
-      border: 1px solid rgba(79, 70, 229, 0.3);
-      color: #818cf8;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #a5b4fc;
       padding: 6px 14px;
       border-radius: 9999px;
       font-size: 0.85rem;
@@ -88,12 +88,12 @@
       border-radius: 20px;
       padding: 35px;
       margin-bottom: 30px;
-      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
       transition: transform 0.3s ease, border-color 0.3s ease;
     }
 
     .card:hover {
-      border-color: rgba(79, 70, 229, 0.4);
+      border-color: rgba(99, 102, 241, 0.4);
     }
 
     h2 {
@@ -120,15 +120,15 @@
     .step-item {
       display: flex;
       gap: 20px;
-      padding: 16px;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid rgba(255, 255, 255, 0.03);
       border-radius: 14px;
       transition: background 0.2s ease;
     }
 
     .step-item:hover {
-      background: rgba(255, 255, 255, 0.04);
+      background: rgba(255, 255, 255, 0.02);
     }
 
     .step-number {
@@ -143,13 +143,13 @@
       justify-content: center;
       font-weight: 700;
       font-size: 1rem;
-      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.4);
+      box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);
     }
 
     .step-content h3 {
       font-size: 1.1rem;
       font-weight: 600;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       color: #f1f5f9;
     }
 
@@ -171,15 +171,27 @@
     }
 
     .code-block {
-      background: #090d16;
-      border: 1px solid #1e293b;
-      padding: 12px 16px;
-      border-radius: 8px;
+      background: #030712;
+      border: 1px solid #1f2937;
+      padding: 14px 18px;
+      border-radius: 10px;
       font-family: 'Courier New', Courier, monospace;
       font-size: 0.9rem;
       color: #cbd5e1;
       margin: 10px 0;
       overflow-x: auto;
+      position: relative;
+    }
+
+    .code-block::after {
+      content: 'Terminal';
+      position: absolute;
+      top: 6px;
+      right: 12px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      color: #4b5563;
+      font-weight: 700;
     }
 
     /* Info Alerts */
@@ -218,8 +230,8 @@
     }
 
     .office-card {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid rgba(255, 255, 255, 0.03);
       border-radius: 16px;
       padding: 24px;
       text-align: center;
@@ -228,7 +240,8 @@
 
     .office-card:hover {
       transform: translateY(-4px);
-      border-color: rgba(255, 255, 255, 0.1);
+      border-color: rgba(99, 102, 241, 0.2);
+      background: rgba(255, 255, 255, 0.02);
     }
 
     .office-icon {
@@ -267,26 +280,6 @@
       text-decoration: underline;
     }
 
-    /* Mini tags */
-    .tag {
-      font-size: 0.75rem;
-      padding: 2px 8px;
-      border-radius: 9999px;
-      font-weight: 600;
-      text-transform: uppercase;
-      margin-left: 6px;
-    }
-    .tag-admin {
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #f87171;
-    }
-    .tag-click {
-      background: rgba(14, 165, 233, 0.15);
-      border: 1px solid rgba(14, 165, 233, 0.3);
-      color: #38bdf8;
-    }
-
     @media (max-width: 600px) {
       h1 {
         font-size: 2rem;
@@ -303,65 +296,76 @@
     
     <header>
       <div class="header-badge">
-        <i class="fa-solid fa-circle-check"></i> Độc lập • Bảo mật • Tự động hóa
+        <i class="fa-solid fa-server"></i> Serverless • An Toàn • Kết Nối Trực Tiếp
       </div>
       <h1>JP-VI Translator Add-in</h1>
-      <p class="subtitle">Tài liệu hướng dẫn cài đặt và khởi chạy ứng dụng cục bộ trên Windows</p>
+      <p class="subtitle">Hướng dẫn khởi chạy ứng dụng trực tiếp trên Microsoft Office (Windows)</p>
     </header>
 
     <!-- SECTION 1: OVERVIEW -->
     <div class="card">
-      <h2><i class="fa-solid fa-cubes"></i> Giới thiệu Bộ cài đặt</h2>
+      <h2><i class="fa-solid fa-circle-info"></i> Tổng quan về phiên bản Serverless</h2>
       <p style="color: var(--text-muted); margin-bottom: 16px;">
-        Bộ cài đặt này được thiết kế để chạy Add-in dịch thuật tiếng Nhật sang tiếng Việt trực tiếp trên máy tính của bạn (Localhost). Toàn bộ dữ liệu được xử lý cục bộ và bảo mật tuyệt đối. 
+        Phiên bản Add-in này hoạt động <strong>hoàn toàn không cần backend server chạy cục bộ</strong> (loại bỏ Python FastAPI và các mô hình LLM).
+        Add-in sẽ kết nối trực tiếp đến API Google dịch từ trình duyệt và tự động sinh phiên âm tiếng Nhật (Hiragana/Romaji) thông qua bộ xử lý client-side cực nhẹ.
       </p>
       <div class="alert alert-info">
-        <i class="fa-solid fa-circle-info"></i>
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
         <div>
-          <strong>Cơ chế tự động:</strong> Chương trình tự động sao chép các tệp tin Add-in vào thư mục AppData an toàn của hệ thống, cài đặt và kích hoạt chứng chỉ SSL cục bộ (HTTPS) cho cổng <strong style="color: #fff;">3000</strong>, đồng thời cấu hình server tự động chạy ngầm mỗi khi khởi động Windows.
+          <strong>Ưu điểm:</strong> Khởi chạy tức thì, cực kỳ nhẹ máy, không chiếm dụng tài nguyên CPU/GPU và không cần cài đặt Python. Chỉ cần máy tính của bạn có kết nối Internet để gọi API Google dịch.
         </div>
       </div>
     </div>
 
-    <!-- SECTION 2: INSTALLATION STEPS -->
+    <!-- SECTION 2: STEPS TO RUN -->
     <div class="card">
-      <h2><i class="fa-solid fa-list-check"></i> Các bước cài đặt nhanh</h2>
+      <h2><i class="fa-solid fa-circle-play"></i> Các bước khởi chạy Add-in</h2>
       <div class="steps">
         
         <div class="step-item">
           <div class="step-number">1</div>
           <div class="step-content">
-            <h3>Giải nén thư mục cài đặt</h3>
-            <p>Giải nén toàn bộ tệp tin từ file zip đã tải về ra một thư mục bất kỳ trên máy tính của bạn.</p>
+            <h3>Yêu cầu chuẩn bị</h3>
+            <p>Đảm bảo máy tính của bạn đã cài đặt <strong style="color: #fff;">Node.js</strong> (Phiên bản khuyến nghị: v18 trở lên). Nếu chưa có, bạn có thể tải về từ <a href="https://nodejs.org/" target="_blank" style="color: var(--accent); text-decoration: underline;">Trang chủ Node.js</a>.</p>
           </div>
         </div>
 
         <div class="step-item">
           <div class="step-number">2</div>
           <div class="step-content">
-            <h3>Chạy file cài đặt tự động <span class="tag tag-admin">Quyền Admin</span></h3>
-            <p>Click đúp chuột (Double-click) vào tệp <strong style="color: #fff;">install.bat</strong>.</p>
-            <p>Hộp thoại xác nhận cấp quyền hệ thống (UAC) sẽ xuất hiện. Hãy chọn <strong style="color: #34d399;">Yes</strong> để đồng ý.</p>
+            <h3>Mở Terminal tại thư mục dự án</h3>
+            <p>Mở cửa sổ Command Prompt (cmd) hoặc PowerShell tại thư mục chứa mã nguồn Add-in này.</p>
           </div>
         </div>
 
         <div class="step-item">
           <div class="step-number">3</div>
           <div class="step-content">
-            <h3>Hoàn tất quá trình cài đặt</h3>
-            <p>Một cửa sổ lệnh màu đen sẽ tự động chạy để sao chép dữ liệu, tin cậy chứng chỉ SSL bảo mật cục bộ và đăng ký Add-in. Khi xuất hiện dòng chữ thông báo hoàn tất, hãy nhấn một phím bất kỳ để đóng cửa sổ.</p>
+            <h3>Cài đặt các gói thư viện phụ thuộc (Chỉ chạy lần đầu)</h3>
+            <p>Nhập lệnh sau và nhấn Enter để cài đặt thư viện:</p>
+            <div class="code-block">npm install</div>
           </div>
         </div>
 
         <div class="step-item">
           <div class="step-number">4</div>
           <div class="step-content">
-            <h3>Khởi động Server Dịch thuật</h3>
-            <p>Hệ thống đã tự tạo một phím tắt tên là <strong style="color: #fff;">JP-VI Translator Server</strong> ngoài màn hình Desktop. Bạn hãy click đúp vào shortcut này để khởi chạy server dịch thuật lần đầu tiên.</p>
-            <div class="alert alert-warning" style="margin-top: 10px; padding: 12px 16px;">
-              <i class="fa-solid fa-triangle-exclamation"></i>
+            <h3>Khởi chạy Add-in lên ứng dụng Office mong muốn</h3>
+            <p>Hệ thống hỗ trợ khởi chạy tự động lên **Excel, Word hoặc PowerPoint**. Hãy chạy một trong các lệnh dưới đây tương ứng với ứng dụng bạn muốn sử dụng:</p>
+            
+            <p style="margin-top: 10px; color: #fff; font-weight: 500;">Dành cho Microsoft Excel:</p>
+            <div class="code-block">npm run start:excel</div>
+
+            <p style="margin-top: 10px; color: #fff; font-weight: 500;">Dành cho Microsoft Word:</p>
+            <div class="code-block">npm run start:word</div>
+
+            <p style="margin-top: 10px; color: #fff; font-weight: 500;">Dành cho Microsoft PowerPoint:</p>
+            <div class="code-block">npm run start:powerpoint</div>
+
+            <div class="alert alert-warning" style="margin-top: 12px; padding: 12px 16px;">
+              <i class="fa-solid fa-shield-halved"></i>
               <div>
-                Server sẽ <strong>tự động chạy ngầm ở dạng thu nhỏ (minimized)</strong> mỗi khi bạn bật máy tính, bạn không cần phải tự khởi động lại ở các lần sử dụng sau.
+                <strong>Lần chạy đầu tiên:</strong> Một hộp thoại Windows sẽ xuất hiện yêu cầu bạn <strong>cấp quyền tin cậy Chứng chỉ SSL cục bộ (Developer Certificate)</strong> để đảm bảo kết nối HTTPS an toàn. Vui lòng bấm <strong style="color: #34d399;">Yes / Đồng ý</strong> để tiếp tục.
               </div>
             </div>
           </div>
@@ -370,28 +374,27 @@
       </div>
     </div>
 
-    <!-- SECTION 3: HOW TO OPEN IN OFFICE -->
+    <!-- SECTION 3: HOW TO ACTIVATE IN OFFICE -->
     <div class="card">
-      <h2><i class="fa-solid fa-window-restore"></i> Cách kích hoạt Add-in trong Microsoft Office</h2>
+      <h2><i class="fa-solid fa-window-restore"></i> Cách kích hoạt giao diện Add-in</h2>
       <p style="color: var(--text-muted); margin-bottom: 20px;">
-        Sau khi đã hoàn tất cài đặt và khởi động server, bạn hãy mở Microsoft Office để kích hoạt giao diện dịch thuật:
+        Sau khi chạy lệnh, Microsoft Office sẽ tự động mở ra. Bạn hãy thao tác như sau để kích hoạt bảng điều khiển:
       </p>
       
       <div class="steps">
         <div class="step-item">
-          <div class="step-number"><i class="fa-solid fa-eye"></i></div>
+          <div class="step-number"><i class="fa-solid fa-house"></i></div>
           <div class="step-content">
-            <h3>Mở tab Home và chọn Add-ins</h3>
-            <p>Mở Excel, Word hoặc PowerPoint bất kỳ. Trên thanh Ribbon, chọn thẻ <strong style="color: #fff;">Home</strong> -> Tìm và bấm chọn mục <strong style="color: #fff;">Add-ins</strong> (hoặc <strong style="color: #fff;">My Add-ins</strong>).</p>
+            <h3>1. Trên thanh công cụ, vào thẻ Home</h3>
+            <p>Tìm mục <strong style="color: #fff;">Add-ins</strong> (hoặc <strong style="color: #fff;">My Add-ins</strong>) ở góc bên phải.</p>
           </div>
         </div>
 
         <div class="step-item">
-          <div class="step-number"><i class="fa-solid fa-code"></i></div>
+          <div class="step-number"><i class="fa-solid fa-laptop-code"></i></div>
           <div class="step-content">
-            <h3>Chọn Add-in của Nhà phát triển (Developer Add-ins)</h3>
-            <p>Trong cửa sổ quản lý Add-in, chọn danh mục nhóm <strong style="color: #fff;">Developer Add-ins</strong> (hoặc <em>Add-in dành cho nhà phát triển</em>).</p>
-            <p>Bấm chọn biểu tượng <strong style="color: #818cf8;">JP-VI Translator</strong> để mở bảng dịch thuật ở thanh bên phải màn hình.</p>
+            <h3>2. Chọn Add-in phát triển cục bộ</h3>
+            <p>Chọn mục **Developer Add-ins** (hoặc *Add-in dành cho nhà phát triển*), biểu tượng <strong style="color: #818cf8;">JP-VI Translator</strong> sẽ xuất hiện tại đó. Click vào để mở thanh dịch thuật ở góc phải.</p>
           </div>
         </div>
       </div>
@@ -400,17 +403,17 @@
         <div class="office-card">
           <div class="office-icon office-excel"><i class="fa-regular fa-file-excel"></i></div>
           <h3>Microsoft Excel</h3>
-          <p>Dịch dữ liệu trực tiếp trong ô bảng tính được chọn.</p>
+          <p>Tự động dịch dữ liệu của ô bảng tính khi click chọn.</p>
         </div>
         <div class="office-card">
           <div class="office-icon office-word"><i class="fa-regular fa-file-word"></i></div>
           <h3>Microsoft Word</h3>
-          <p>Dịch nhanh văn bản, đoạn văn đang bôi đen.</p>
+          <p>Dịch tức thì đoạn văn bản bôi đen trong tài liệu.</p>
         </div>
         <div class="office-card">
           <div class="office-icon office-ppt"><i class="fa-regular fa-file-powerpoint"></i></div>
           <h3>PowerPoint</h3>
-          <p>Dịch nội dung các ô chữ trên các trang thuyết trình.</p>
+          <p>Dịch nội dung văn bản trên slide đang biên tập.</p>
         </div>
       </div>
     </div>
@@ -420,21 +423,21 @@
       <h2><i class="fa-solid fa-wrench" style="color: var(--warning);"></i> Xử lý sự cố thường gặp</h2>
       <div class="steps">
         <div class="step-content" style="padding-left: 10px;">
-          <h3 style="color: var(--warning); margin-bottom: 4px;"><i class="fa-solid fa-shield-halved"></i> 1. Cảnh báo lỗi chứng chỉ bảo mật (Security Certificate)</h3>
-          <p>Nếu Office hiển thị lỗi <em>"ADD-IN ERROR: The content is blocked because it isn't signed by a valid security certificate"</em>, có nghĩa là chứng chỉ chưa được tin cậy hoàn toàn hoặc trình cài đặt cũ đang chạy ngầm khóa tệp tin.</p>
-          <p><strong>Cách khắc phục:</strong> Chạy lại file <strong style="color: #fff;">install.bat</strong> bằng quyền Administrator để hệ thống tự động tắt tiến trình cũ, khởi tạo lại và ghi nhận chứng chỉ SSL mới.</p>
+          <h3 style="color: var(--warning); margin-bottom: 4px;"><i class="fa-solid fa-triangle-exclamation"></i> Lỗi chặn chứng chỉ bảo mật (SSL Certificate)</h3>
+          <p>Nếu Office hiển thị lỗi <em>"ADD-IN ERROR: The content is blocked because it isn't signed by a valid security certificate"</em>, có nghĩa là Office chưa tin cậy chứng chỉ SSL local.</p>
+          <p><strong>Cách khắc phục:</strong> Chạy lệnh sau trong Terminal để cài đặt lại chứng chỉ SSL:</p>
+          <div class="code-block">npx office-addin-dev-certs install</div>
+          <p>Sau đó đồng ý ở thông báo Windows xuất hiện và khởi chạy lại lệnh ở Bước 4.</p>
           
-          <h3 style="color: var(--warning); margin-top: 16px; margin-bottom: 4px;"><i class="fa-solid fa-link-slash"></i> 2. Đèn tín hiệu Antigravity báo màu đỏ (🔴 Disconnected)</h3>
-          <p><strong>Cách khắc phục:</strong> Hãy đảm bảo bạn đã mở ứng dụng <strong>Antigravity IDE</strong> trên máy tính của mình. Add-in sẽ tự động kết nối qua cổng dịch vụ cục bộ và chuyển trạng thái sang màu xanh lá (🟢 Connected).</p>
-          
-          <h3 style="color: var(--warning); margin-top: 16px; margin-bottom: 4px;"><i class="fa-solid fa-key"></i> 3. Sử dụng khóa API tùy chọn</h3>
-          <p>Nếu không cài đặt Antigravity IDE, bạn có thể chuyển chế độ dịch sang <strong>Gemini API</strong> trong tab cài đặt (Settings Panel) của Add-in và điền API Key cá nhân của mình để sử dụng dịch trực tuyến qua máy chủ Google.</p>
+          <h3 style="color: var(--warning); margin-top: 16px; margin-bottom: 4px;"><i class="fa-solid fa-ban"></i> Dừng ứng dụng</h3>
+          <p>Khi sử dụng xong, bạn có thể nhấn <kbd style="background:#334155; padding: 2px 6px; border-radius:4px;">Ctrl + C</kbd> tại cửa sổ terminal để tắt server. Nếu muốn gỡ Add-in ra khỏi Office, hãy chạy lệnh:</p>
+          <div class="code-block">npm run stop</div>
         </div>
       </div>
     </div>
 
     <footer>
-      <p>© 2026 JP-VI Translator. Phát triển trên nền tảng <a href="https://github.com/google-gemini/antigravity" target="_blank">Google Antigravity SDK</a>.</p>
+      <p>© 2026 JP-VI Translator Add-in.</p>
     </footer>
 
   </div>
