@@ -78,7 +78,13 @@ let webllmEngine = null;
 let isWebllmLoading = false;
 let ollamaModel = localStorage.getItem("jp_vi_ollama_model") || "qwen2.5:1.5b";
 let isOllamaConnected = false;
-let sdkagentUrl = localStorage.getItem("jp_vi_sdkagent_url") || "http://localhost:8000/translate";
+let defaultSdkAgentUrl = "http://localhost:8000/translate";
+if (window.location.origin.includes("localhost") || window.location.origin.includes("127.0.0.1")) {
+  if (window.location.protocol === "https:") {
+    defaultSdkAgentUrl = window.location.origin + "/translate";
+  }
+}
+let sdkagentUrl = localStorage.getItem("jp_vi_sdkagent_url") || defaultSdkAgentUrl;
 let sdkagentKey = localStorage.getItem("jp_vi_sdkagent_key") || "";
 let sdkagentModel = localStorage.getItem("jp_vi_sdkagent_model") || "flash_lite";
 let isSdkAgentConnected = false;

@@ -1,10 +1,96 @@
 import os
 import json
 import re
+import sys
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
+
+# Define dynamic paths
+USER_PROFILE = os.environ.get("USERPROFILE") or os.path.expanduser("~")
+GEMINI_DIR = os.path.join(USER_PROFILE, ".gemini", "antigravity")
+
+def generate_self_signed_cert(cert_path="localhost.crt", key_path="localhost.key"):
+    from cryptography import x509
+    from cryptography.x509.oid import NameOID, ExtendedKeyUsageOID
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    from cryptography.hazmat.primitives import serialization
+    import datetime
+
+    # Generate private key
+    key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+    )
+    
+    # Generate certificate
+    subject = issuer = x509.Name([
+        x509.NameAttribute(NameOID.COUNTRY_NAME, "VN"),
+        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Hanoi"),
+        x509.NameAttribute(NameOID.LOCALITY_NAME, "Hanoi"),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "JP-VI Translator"),
+        x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
+    ])
+    
+    utc_now = datetime.datetime.now(datetime.timezone.utc) if hasattr(datetime, "timezone") else datetime.datetime.utcnow()
+    
+    cert = x509.CertificateBuilder().subject_name(
+        subject
+    ).issuer_name(
+        issuer
+    ).public_key(
+        key.public_key()
+    ).serial_number(
+        x509.random_serial_number()
+    ).not_valid_before(
+        utc_now - datetime.timedelta(days=1)
+    ).not_valid_after(
+        # 10 years validity
+        utc_now + datetime.timedelta(days=3650)
+    ).add_extension(
+        x509.BasicConstraints(ca=True, path_length=None),
+        critical=True,
+    ).add_extension(
+        x509.KeyUsage(
+            digital_signature=True,
+            content_commitment=False,
+            key_encipherment=True,
+            data_encipherment=False,
+            key_agreement=False,
+            key_cert_sign=True,
+            crl_sign=True,
+            encipher_only=False,
+            decipher_only=False,
+        ),
+        critical=True,
+    ).add_extension(
+        x509.ExtendedKeyUsage([
+            ExtendedKeyUsageOID.SERVER_AUTH,
+            ExtendedKeyUsageOID.CLIENT_AUTH,
+        ]),
+        critical=False,
+    ).add_extension(
+        x509.SubjectAlternativeName([
+            x509.DNSName("localhost"),
+            x509.DNSName("127.0.0.1"),
+        ]),
+        critical=False,
+    ).sign(key, hashes.SHA256())
+    
+    # Write certificate to file
+    with open(cert_path, "wb") as f:
+        f.write(cert.public_bytes(serialization.Encoding.PEM))
+        
+    # Write private key to file
+    with open(key_path, "wb") as f:
+        f.write(key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.NoEncryption()
+        ))
+
 
 # Initialize FastAPI App
 app = FastAPI(
@@ -54,7 +140,7 @@ def cleanup_conversation(conversation_id: str):
     # Wait briefly for files to close handles
     time.sleep(0.5)
     
-    gemini_dir = r"C:\Users\fssv-vu-thien\.gemini\antigravity"
+    gemini_dir = GEMINI_DIR
     
     # 1. Clean conversations folder
     conv_dir = os.path.join(gemini_dir, "conversations")
@@ -89,7 +175,12 @@ def call_antigravity_agent_api(text: str, src: str, tgt: str, model: str = "flas
     import subprocess
     import time
     
-    agentapi_path = r"c:\Users\fssv-vu-thien\AppData\Local\Programs\Antigravity IDE\resources\app\extensions\antigravity\bin\language_server_windows_x64.exe"
+    agentapi_path = os.path.join(
+        USER_PROFILE,
+        "AppData", "Local", "Programs",
+        "Antigravity IDE", "resources", "app", "extensions", "antigravity", "bin",
+        "language_server_windows_x64.exe"
+    )
     if not os.path.exists(agentapi_path):
         raise FileNotFoundError(f"Antigravity Agent binary not found at: {agentapi_path}")
 
@@ -121,7 +212,7 @@ Ensure your output contains ONLY the JSON block. Do not wrap it in markdown or a
     conversation_id = data["response"]["newConversation"]["conversationId"]
     
     transcript_path = os.path.join(
-        r"C:\Users\fssv-vu-thien\.gemini\antigravity\brain",
+        GEMINI_DIR, "brain",
         conversation_id,
         ".system_generated",
         "logs",
@@ -261,7 +352,7 @@ async def cleanup_history():
         "63406780-76b6-4b11-99ce-498efcf02b07"  # Integrating Antigravity SDK Agent
     }
 
-    gemini_dir = r"C:\Users\fssv-vu-thien\.gemini\antigravity"
+    gemini_dir = GEMINI_DIR
     deleted_count = 0
     
     try:
@@ -307,6 +398,54 @@ async def cleanup_history():
         return {"status": "ok", "message": f"Dọn dẹp hoàn tất. Đã xóa {deleted_count} tệp tin hội thoại."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi dọn dẹp lịch sử: {str(e)}")
+# Serve static files from 'dist' directory if present
+if getattr(sys, 'frozen', False):
+    base_dir = os.path.dirname(sys.executable)
+else:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
+dist_dir = os.path.join(base_dir, "dist")
+if os.path.exists(dist_dir):
+    print(f"Mounting static files from: {dist_dir}")
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/", StaticFiles(directory=dist_dir, html=True), name="static")
+else:
+    print(f"Warning: Static files directory 'dist' not found at {dist_dir}. Frontend will not be served.")
+
 if __name__ == "__main__":
-    print("Starting Antigravity SDK Agent translation server on http://localhost:8000")
-    uvicorn.run("agent_backend:app", host="127.0.0.1", port=8000, reload=True)
+    import argparse
+    parser = argparse.ArgumentParser(description="Antigravity Translation Agent Backend")
+    parser.add_argument("--prod", action="store_true", help="Run in production HTTPS mode on port 3000")
+    parser.add_argument("--host", default="127.0.0.1", help="Host address to bind to")
+    parser.add_argument("--port", type=int, help="Port to run the server on")
+    args = parser.parse_args()
+
+    # Determine paths for certs
+    cert_file = os.path.join(base_dir, "localhost.crt")
+    key_file = os.path.join(base_dir, "localhost.key")
+    
+    # Generate certs if they don't exist
+    if not os.path.exists(cert_file) or not os.path.exists(key_file):
+        try:
+            print("SSL certificates not found. Generating self-signed certificate for localhost...")
+            generate_self_signed_cert(cert_file, key_file)
+            print(f"Successfully generated certificate: {cert_file}")
+        except Exception as e:
+            print(f"Error generating self-signed certificate: {e}")
+            
+    is_prod = args.prod or (os.path.exists(cert_file) and os.path.exists(key_file))
+    port = args.port or (3000 if is_prod else 8000)
+    is_frozen = getattr(sys, 'frozen', False)
+    
+    if is_prod and os.path.exists(cert_file) and os.path.exists(key_file):
+        print(f"Starting Antigravity SDK Agent translation server on HTTPS: https://localhost:{port}")
+        if is_frozen:
+            uvicorn.run(app, host=args.host, port=port, ssl_keyfile=key_file, ssl_certfile=cert_file)
+        else:
+            uvicorn.run("agent_backend:app", host=args.host, port=port, ssl_keyfile=key_file, ssl_certfile=cert_file, reload=True)
+    else:
+        print(f"Starting Antigravity SDK Agent translation server on HTTP: http://localhost:{port}")
+        if is_frozen:
+            uvicorn.run(app, host=args.host, port=port)
+        else:
+            uvicorn.run("agent_backend:app", host=args.host, port=port, reload=True)

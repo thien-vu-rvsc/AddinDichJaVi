@@ -22,3 +22,16 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# PyInstaller & Installer builds
+build/
+*.spec
+jp_vi_translator_installer/
+jp_vi_translator_installer.zip
+
+# Local certificates
+localhost.crt
+localhost.key
+localhost.crt.old
+localhost.key.old
+agent_backend.exe.old
