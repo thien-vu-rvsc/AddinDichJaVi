@@ -123,6 +123,12 @@ body.light-theme .history-list::-webkit-scrollbar-thumb:hover {
   padding: 0;
 }
 
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   font-family: var(--font-body);
   background-color: var(--bg-main);
@@ -131,8 +137,7 @@ body {
     radial-gradient(at 100% 100%, hsla(182, 100%, 50%, 0.08) 0px, transparent 50%);
   background-attachment: fixed;
   color: var(--text-primary);
-  width: 400px;
-  min-height: 520px;
+  width: 100%;
   overflow-x: hidden;
 }
 
@@ -140,10 +145,11 @@ body {
 .app-container {
   display: flex;
   flex-direction: column;
-  min-height: 520px;
+  min-height: 100%;
   padding: 10px;
   width: 100%;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* Header Styles */

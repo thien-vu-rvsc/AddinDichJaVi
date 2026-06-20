@@ -5,8 +5,6 @@ const tabBtns = document.querySelectorAll(".tab-btn");
 const tabPanes = document.querySelectorAll(".tab-pane");
 const sourceTextEl = document.getElementById("source-text");
 const ttsBtnEl = document.getElementById("tts-btn");
-const autoTranslateSwitch = document.getElementById("auto-translate-switch");
-const translateBtn = document.getElementById("translate-btn");
 const resultCard = document.getElementById("result-card");
 const translationOutput = document.getElementById("translation-output");
 const copyBtn = document.getElementById("copy-btn");
@@ -33,7 +31,6 @@ const outputHiraganaOutput = document.getElementById("output-hiragana-output");
 const phoneticSelect = document.getElementById("phonetic-select");
 
 // State Variables
-let isAutoTranslate = localStorage.getItem("jp_vi_ext_auto_translate") !== "false"; // Default to true
 let lastTranslatedText = "";
 let isJaToVi = true; // true: Japanese -> Vietnamese, false: Vietnamese -> Japanese
 let phoneticMode = localStorage.getItem("jp_vi_ext_phonetic_mode") || "hiragana";
@@ -99,10 +96,7 @@ function tryGetActiveTabSelection() {
           if (selectedText) {
             sourceTextEl.value = selectedText;
             ttsBtnEl.disabled = false;
-
-            if (isAutoTranslate) {
-              translateText(selectedText);
-            }
+            translateText(selectedText);
           }
         }
       }
@@ -113,9 +107,6 @@ function tryGetActiveTabSelection() {
 // Main initialization function
 function initApp() {
   // Set UI state based on saved preferences
-  if (autoTranslateSwitch) {
-    autoTranslateSwitch.checked = isAutoTranslate;
-  }
   if (phoneticSelect) {
     phoneticSelect.value = phoneticMode;
   }
@@ -176,27 +167,41 @@ function initApp() {
     lastRomaji = "";
   });
 
-  // Translate Button Click (Manual translation)
-  translateBtn.addEventListener("click", () => {
-    const text = sourceTextEl.value.trim();
-    if (text) {
-      translateText(text);
-    } else {
-      showToast("Vui lòng nhập hoặc bôi đen văn bản cần dịch.");
-    }
-  });
-
-  // Source text area input event to enable speech button
+  // Source text area input event with 500ms debounce for auto-translation
+  let debounceTimer;
   sourceTextEl.addEventListener("input", (e) => {
     const text = e.target.value.trim();
     ttsBtnEl.disabled = text.length === 0;
+    
+    clearTimeout(debounceTimer);
+    if (text) {
+      debounceTimer = setTimeout(() => {
+        translateText(text);
+      }, 500);
+    } else {
+      // Clear translation output when input is empty
+      translationOutput.textContent = "";
+      inputHiraganaOutput.textContent = "";
+      outputHiraganaOutput.textContent = "";
+      inputHiraganaContainer.classList.add("hidden");
+      outputHiraganaContainer.classList.add("hidden");
+      resultCard.classList.add("hidden");
+      lastTranslatedText = "";
+      lastHiragana = "";
+      lastRomaji = "";
+    }
   });
 
-  // Auto-translate Toggle Switch Event
-  autoTranslateSwitch.addEventListener("change", (e) => {
-    isAutoTranslate = e.target.checked;
-    localStorage.setItem("jp_vi_ext_auto_translate", isAutoTranslate);
-  });
+  // Listen for text selection messages from content script
+  if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessage) {
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (message.type === "TEXT_SELECTED" && message.text) {
+        sourceTextEl.value = message.text;
+        ttsBtnEl.disabled = false;
+        translateText(message.text);
+      }
+    });
+  }
 
   // TTS Speaker Button (Input Card - Japanese Text in JA->VI)
   ttsBtnEl.addEventListener("click", () => {
